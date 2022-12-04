@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package service;
+
+option go_package = "./";
+
+service FileManager {
+  rpc SaveBatch(Batch) returns (Resp);
+  rpc GetBatch(Req) returns (Batch);
+  rpc CheckBatch(Req) returns (Resp);
+}
+
+message Batch {
+  string Batch = 1;
+}
+
+message Resp {
+    string Answer = 1;
+}
+
+message Req {
+    string Answer = 1;
+}
