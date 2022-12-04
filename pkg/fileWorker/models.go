@@ -1,11 +1,17 @@
 package fileworker
 
-type BatchForSave struct {
+type Batch struct {
+	Username   string
+	FolderID   string
+	ClientID   string
 	Path       string
 	Hash       string
-	ModTime    int
+	ModTime    string
 	FullSize   int
 	Part       int
 	CountParts int
-	Content    int
+	Content    []byte
+	PartSize   int
+	Offset     int
+	SizeFile   int
 }
