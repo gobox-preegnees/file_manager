@@ -5,19 +5,69 @@ package service;
 option go_package = "./";
 
 service FileManager {
-  rpc SaveBatch(Batch) returns (Resp);
-  rpc GetBatch(Req) returns (Batch);
-  rpc CheckBatch(Req) returns (Resp);
+  rpc Recover     (InfoForRecover)  returns (Resp) ;
+  rpc Delete      (InfoForDeletion) returns (Resp) ;
+  rpc Rename      (InfoForRenaming) returns (Resp) ;
+  rpc Check       (InfoForCheck)    returns (Resp) ;
+
+  rpc SaveBatch   (Batch)           returns (Resp) ;
+  rpc GetBatch    (GetBatchReq)     returns (Batch);
+
+  rpc CreateFolder(CreateFolderReq) returns (Resp) ;
+}
+
+message Identification {
+  string Username = 1; // my_username, создает пользователь при регистрации (уникально)
+  string FolderID = 2; // folder_one, создает пользователь (или генериуется) в аккаунте (уникально в аккаунте (username))
+  string ClientID = 3; // client_one, создает пользователь (или генериуется) в папке (уникально в папке (folderID))
+}
+
+message InfoForCheck {
+  Identification ID   = 1;
+  string         Path = 2; // folder1/folder2/, относительный путь файла, который находится у пользователя на мшине (уникально у пользователя на машине)
+}
+
+message InfoForRecover {
+  Identification ID   = 1;
+  string         Path = 2; // folder1/folder2/, относительный путь файла, который находится у пользователя на мшине (уникально у пользователя на машине)
+}
+
+message InfoForDeletion {
+  Identification ID   = 1;
+  string         Path = 2; // folder1/folder2/, относительный путь файла, который находится у пользователя на мшине (уникально у пользователя на машине)
+}
+
+message InfoForRenaming {
+  Identification ID      = 1;
+  string         Path    = 2; // folder1/folder2/, относительный путь файла, который находится у пользователя на мшине (уникально у пользователя на машине)
+  string         NewName = 3; // folder1/folder3/, новое имя (переименование)
 }
 
 message Batch {
-  string Batch = 1;
+  Identification ID         = 1;
+  string         Path       = 2;  // folder1/folder2/file.txt, относительный путь файла, который находится у пользователя на мшине (уникально у пользователя на машине)
+  string         Hash       = 3;  // jtrhg_r8t454, хеш данных файла или папки
+  int64          Part       = 4;  // 1, часть файла по счету при передачи на сервер 
+  int64          PartSize   = 5;  // 2048, размер части
+  int64          Offset     = 6;  // 4096, сдвиг в байтах в файле
+  int64          SizeFile   = 7;  // 1284543, размер файла
+  int64          CountParts = 8;  // 100, колличество частей в файле
+  int64          ModTime    = 9;  // 454564567, время модификации файла или папки
+  bytes          Content    = 10; // 10101100, байтовое содержание куска файла
+  // bool   IsFolder   = 13; // false, файл или папка
 }
 
 message Resp {
-    string Answer = 1;
+  int32  Status      = 1;
+  string Description = 2;
 }
 
-message Req {
-    string Answer = 1;
+message GetBatchReq {
+  Identification ID   = 1;
+  string         Path = 2; // folder1/folder2/, относительный путь файла, который находится у пользователя на мшине (уникально у пользователя на машине)
+}
+
+message CreateFolderReq {
+  Identification ID   = 1;
+  string         Path = 2; // folder1/folder2/, относительный путь файла, который находится у пользователя на мшине (уникально у пользователя на машине)
 }

@@ -41,17 +41,37 @@ func (s server) Run() error {
 	return nil
 }
 
+func (s *server) Recover(ctx context.Context, infoForRecover *protobuf.InfoForRecover) (*protobuf.Resp, error) {
+	
+	return nil, nil
+}
+
+func (s *server) Delete(ctx context.Context, infoForDeletion *protobuf.InfoForDeletion) (*protobuf.Resp, error) {
+	
+	return nil, nil
+}
+
+func (s *server) Rename(ctx context.Context, infoForRenaming *protobuf.InfoForRenaming) (*protobuf.Resp, error) {
+	
+	return nil, nil
+}
+
+func (s *server) Check(ctx context.Context, infoForCheck *protobuf.InfoForCheck) (*protobuf.Resp, error) {
+	
+	return nil, nil
+}
+
 func (s *server) SaveBatch(ctx context.Context, batch *protobuf.Batch) (*protobuf.Resp, error) {
 	
 	return nil, nil
 }
 
-func (s *server) CheckBatch(ctx context.Context, Req *protobuf.Req) (*protobuf.Resp, error) {
+func (s *server) GetBatch(ctx context.Context, getBatchReq *protobuf.GetBatchReq) (*protobuf.Batch, error) {
 	
 	return nil, nil
 }
 
-func (s *server) GetBatch(ctx context.Context, Req *protobuf.Req) (*protobuf.Batch, error) {
+func (s *server) CreateFolder(ctx context.Context, createFolderReq *protobuf.CreateFolderReq) (*protobuf.Resp, error) {
 	
 	return nil, nil
 }

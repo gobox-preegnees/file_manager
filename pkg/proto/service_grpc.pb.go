@@ -22,9 +22,13 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type FileManagerClient interface {
+	Recover(ctx context.Context, in *InfoForRecover, opts ...grpc.CallOption) (*Resp, error)
+	Delete(ctx context.Context, in *InfoForDeletion, opts ...grpc.CallOption) (*Resp, error)
+	Rename(ctx context.Context, in *InfoForRenaming, opts ...grpc.CallOption) (*Resp, error)
+	Check(ctx context.Context, in *InfoForCheck, opts ...grpc.CallOption) (*Resp, error)
 	SaveBatch(ctx context.Context, in *Batch, opts ...grpc.CallOption) (*Resp, error)
-	GetBatch(ctx context.Context, in *Req, opts ...grpc.CallOption) (*Batch, error)
-	CheckBatch(ctx context.Context, in *Req, opts ...grpc.CallOption) (*Resp, error)
+	GetBatch(ctx context.Context, in *GetBatchReq, opts ...grpc.CallOption) (*Batch, error)
+	CreateFolder(ctx context.Context, in *CreateFolderReq, opts ...grpc.CallOption) (*Resp, error)
 }
 
 type fileManagerClient struct {
@@ -33,6 +37,42 @@ type fileManagerClient struct {
 
 func NewFileManagerClient(cc grpc.ClientConnInterface) FileManagerClient {
 	return &fileManagerClient{cc}
+}
+
+func (c *fileManagerClient) Recover(ctx context.Context, in *InfoForRecover, opts ...grpc.CallOption) (*Resp, error) {
+	out := new(Resp)
+	err := c.cc.Invoke(ctx, "/service.FileManager/Recover", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fileManagerClient) Delete(ctx context.Context, in *InfoForDeletion, opts ...grpc.CallOption) (*Resp, error) {
+	out := new(Resp)
+	err := c.cc.Invoke(ctx, "/service.FileManager/Delete", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fileManagerClient) Rename(ctx context.Context, in *InfoForRenaming, opts ...grpc.CallOption) (*Resp, error) {
+	out := new(Resp)
+	err := c.cc.Invoke(ctx, "/service.FileManager/Rename", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fileManagerClient) Check(ctx context.Context, in *InfoForCheck, opts ...grpc.CallOption) (*Resp, error) {
+	out := new(Resp)
+	err := c.cc.Invoke(ctx, "/service.FileManager/Check", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *fileManagerClient) SaveBatch(ctx context.Context, in *Batch, opts ...grpc.CallOption) (*Resp, error) {
@@ -44,7 +84,7 @@ func (c *fileManagerClient) SaveBatch(ctx context.Context, in *Batch, opts ...gr
 	return out, nil
 }
 
-func (c *fileManagerClient) GetBatch(ctx context.Context, in *Req, opts ...grpc.CallOption) (*Batch, error) {
+func (c *fileManagerClient) GetBatch(ctx context.Context, in *GetBatchReq, opts ...grpc.CallOption) (*Batch, error) {
 	out := new(Batch)
 	err := c.cc.Invoke(ctx, "/service.FileManager/GetBatch", in, out, opts...)
 	if err != nil {
@@ -53,9 +93,9 @@ func (c *fileManagerClient) GetBatch(ctx context.Context, in *Req, opts ...grpc.
 	return out, nil
 }
 
-func (c *fileManagerClient) CheckBatch(ctx context.Context, in *Req, opts ...grpc.CallOption) (*Resp, error) {
+func (c *fileManagerClient) CreateFolder(ctx context.Context, in *CreateFolderReq, opts ...grpc.CallOption) (*Resp, error) {
 	out := new(Resp)
-	err := c.cc.Invoke(ctx, "/service.FileManager/CheckBatch", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/service.FileManager/CreateFolder", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -66,9 +106,13 @@ func (c *fileManagerClient) CheckBatch(ctx context.Context, in *Req, opts ...grp
 // All implementations must embed UnimplementedFileManagerServer
 // for forward compatibility
 type FileManagerServer interface {
+	Recover(context.Context, *InfoForRecover) (*Resp, error)
+	Delete(context.Context, *InfoForDeletion) (*Resp, error)
+	Rename(context.Context, *InfoForRenaming) (*Resp, error)
+	Check(context.Context, *InfoForCheck) (*Resp, error)
 	SaveBatch(context.Context, *Batch) (*Resp, error)
-	GetBatch(context.Context, *Req) (*Batch, error)
-	CheckBatch(context.Context, *Req) (*Resp, error)
+	GetBatch(context.Context, *GetBatchReq) (*Batch, error)
+	CreateFolder(context.Context, *CreateFolderReq) (*Resp, error)
 	mustEmbedUnimplementedFileManagerServer()
 }
 
@@ -76,14 +120,26 @@ type FileManagerServer interface {
 type UnimplementedFileManagerServer struct {
 }
 
+func (UnimplementedFileManagerServer) Recover(context.Context, *InfoForRecover) (*Resp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Recover not implemented")
+}
+func (UnimplementedFileManagerServer) Delete(context.Context, *InfoForDeletion) (*Resp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
+}
+func (UnimplementedFileManagerServer) Rename(context.Context, *InfoForRenaming) (*Resp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Rename not implemented")
+}
+func (UnimplementedFileManagerServer) Check(context.Context, *InfoForCheck) (*Resp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Check not implemented")
+}
 func (UnimplementedFileManagerServer) SaveBatch(context.Context, *Batch) (*Resp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SaveBatch not implemented")
 }
-func (UnimplementedFileManagerServer) GetBatch(context.Context, *Req) (*Batch, error) {
+func (UnimplementedFileManagerServer) GetBatch(context.Context, *GetBatchReq) (*Batch, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetBatch not implemented")
 }
-func (UnimplementedFileManagerServer) CheckBatch(context.Context, *Req) (*Resp, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CheckBatch not implemented")
+func (UnimplementedFileManagerServer) CreateFolder(context.Context, *CreateFolderReq) (*Resp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateFolder not implemented")
 }
 func (UnimplementedFileManagerServer) mustEmbedUnimplementedFileManagerServer() {}
 
@@ -96,6 +152,78 @@ type UnsafeFileManagerServer interface {
 
 func RegisterFileManagerServer(s grpc.ServiceRegistrar, srv FileManagerServer) {
 	s.RegisterService(&FileManager_ServiceDesc, srv)
+}
+
+func _FileManager_Recover_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(InfoForRecover)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FileManagerServer).Recover(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/service.FileManager/Recover",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FileManagerServer).Recover(ctx, req.(*InfoForRecover))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FileManager_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(InfoForDeletion)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FileManagerServer).Delete(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/service.FileManager/Delete",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FileManagerServer).Delete(ctx, req.(*InfoForDeletion))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FileManager_Rename_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(InfoForRenaming)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FileManagerServer).Rename(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/service.FileManager/Rename",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FileManagerServer).Rename(ctx, req.(*InfoForRenaming))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _FileManager_Check_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(InfoForCheck)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FileManagerServer).Check(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/service.FileManager/Check",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FileManagerServer).Check(ctx, req.(*InfoForCheck))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _FileManager_SaveBatch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -117,7 +245,7 @@ func _FileManager_SaveBatch_Handler(srv interface{}, ctx context.Context, dec fu
 }
 
 func _FileManager_GetBatch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Req)
+	in := new(GetBatchReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -129,25 +257,25 @@ func _FileManager_GetBatch_Handler(srv interface{}, ctx context.Context, dec fun
 		FullMethod: "/service.FileManager/GetBatch",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(FileManagerServer).GetBatch(ctx, req.(*Req))
+		return srv.(FileManagerServer).GetBatch(ctx, req.(*GetBatchReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _FileManager_CheckBatch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Req)
+func _FileManager_CreateFolder_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateFolderReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(FileManagerServer).CheckBatch(ctx, in)
+		return srv.(FileManagerServer).CreateFolder(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/service.FileManager/CheckBatch",
+		FullMethod: "/service.FileManager/CreateFolder",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(FileManagerServer).CheckBatch(ctx, req.(*Req))
+		return srv.(FileManagerServer).CreateFolder(ctx, req.(*CreateFolderReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -160,6 +288,22 @@ var FileManager_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*FileManagerServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
+			MethodName: "Recover",
+			Handler:    _FileManager_Recover_Handler,
+		},
+		{
+			MethodName: "Delete",
+			Handler:    _FileManager_Delete_Handler,
+		},
+		{
+			MethodName: "Rename",
+			Handler:    _FileManager_Rename_Handler,
+		},
+		{
+			MethodName: "Check",
+			Handler:    _FileManager_Check_Handler,
+		},
+		{
 			MethodName: "SaveBatch",
 			Handler:    _FileManager_SaveBatch_Handler,
 		},
@@ -168,8 +312,8 @@ var FileManager_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _FileManager_GetBatch_Handler,
 		},
 		{
-			MethodName: "CheckBatch",
-			Handler:    _FileManager_CheckBatch_Handler,
+			MethodName: "CreateFolder",
+			Handler:    _FileManager_CreateFolder_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
