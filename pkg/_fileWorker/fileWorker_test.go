@@ -1,4 +1,4 @@
-package fileworker
+package _fileworker
 
 import (
 	"testing"

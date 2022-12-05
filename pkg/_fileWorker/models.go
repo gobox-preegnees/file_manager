@@ -6,11 +6,12 @@ type Batch struct {
 	ClientID   string
 	Path       string
 	Hash       string
-	ModTime    int
+	ModTime    string
+	FullSize   int
 	Part       int
 	CountParts int
+	Content    []byte
 	PartSize   int
 	Offset     int
 	SizeFile   int
-	Content    []byte
 }

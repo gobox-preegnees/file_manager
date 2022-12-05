@@ -1,4 +1,4 @@
-package fileworker
+package repo
 
 type Batch struct {
 	Username   string
