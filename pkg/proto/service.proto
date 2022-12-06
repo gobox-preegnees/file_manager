@@ -80,7 +80,7 @@ package service;
 option go_package = "./";
 
 service FileManager {
-  rpc CreateFolder(CreateFolderReq) returns (CreateFolderResp);
+  rpc CreateFolder(CreateFolderReq) returns (CreateFolderResp); // не нужно
   rpc RenameFolder(RenameFolderReq) returns (RenameFolderResp);
   rpc DeleteFolder(DeleteFolderReq) returns (DeleteFolderResp);
   rpc RecoverFolder(RecoverFolderReq) returns (RecoverFolderResp);
