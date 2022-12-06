@@ -9,6 +9,15 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
+var errBatchSizeIsNotValid error = errors.New("Err Batch Size Is Not Valid")
+func IsErrBatchSizeIsNotValid(err error) bool {
+
+	if errors.Is(err, errBatchSizeIsNotValid) {
+		return true
+	}
+	return false
+} 
+
 //go:generate mockgen -destination=../mocks/IStorage.go -source=repo.go
 type IStorage interface {
 	SaveBatchOnDisk(path string, data *[]byte) (n int, err error)
@@ -56,9 +65,7 @@ func (r *repo) SaveBatch(ctx context.Context, batch *Batch) (int, error) {
 		batch.Username, batch.FolderID, batch.ClientID, batch.Path, batch.Hash, batch.ModTime,
 		batch.Part, batch.CountParts, batch.PartSize, batch.Offset, batch.SizeFile,
 	).Scan(&batch_id); err != nil {
-		if err := tx.Rollback(ctx); err != nil {
-			return -1, err
-		}
+		tx.Rollback(ctx)
 		return -1, err
 	}
 
@@ -66,20 +73,17 @@ func (r *repo) SaveBatch(ctx context.Context, batch *Batch) (int, error) {
 
 	n, err := r.storage.SaveBatchOnDisk(strconv.Itoa(batch_id), &batch.Content)
 	if n != batch.PartSize {
-		return -1, errors.New("size batch is not equal saved batch")
+		tx.Rollback(ctx)
+		return -1, errBatchSizeIsNotValid
 	}
 
 	if err != nil {
-		if err := tx.Rollback(ctx); err != nil {
-			return -1, err
-		}
-		return -1, err // TODO(что то сделать с n != batch.PartSize, сделать ошибку для этого)
+		tx.Rollback(ctx)
+		return -1, err
 	}
 
 	if err := tx.Commit(ctx); err != nil {
-		if err := tx.Rollback(ctx); err != nil {
-			return -1, err
-		}
+		tx.Rollback(ctx)
 		return -1, err
 	}
 
@@ -95,7 +99,7 @@ func (r *repo) GetBatch(ctx context.Context, id int) (*Batch, error) {
 	FROM batches
 	WHERE batch_id=$1;
 	`
-	batch := Batch{} 
+	batch := Batch{}
 	err := r.conn.QueryRow(ctx, sql, id).Scan(
 		&batch.Username, &batch.FolderID, &batch.ClientID, &batch.Path, &batch.Hash, &batch.ModTime,
 		&batch.Part, &batch.CountParts, &batch.PartSize, &batch.Offset, &batch.SizeFile,
