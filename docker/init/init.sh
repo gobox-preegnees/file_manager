@@ -24,4 +24,12 @@ create table batches (
     size_file   int  not null,
     constraint PK_batches_batch_id primary key(batch_id)
 );
+
+INSERT INTO batches (
+		username, folder, client, path, hash, mod_time, 
+		part, count_parts, part_size, byte_offset, size_file 
+	) 
+VALUES ('username', 'folder', 'client', 'path', 'hash', 12345, 
+	   1, 2, 3, 4, 5)
+RETURNING batch_id;
 EOSQL
