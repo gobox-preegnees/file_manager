@@ -1,0 +1,120 @@
+syntax = "proto3";
+
+package v1;
+
+option go_package = "./";
+
+service FileManager {
+  rpc CreateFolder(CreateFolderReq) returns (StandardResponse);
+  rpc RenameFolder(RenameFolderReq) returns (StandardResponse);
+  rpc DeleteFolder(DeleteFolderReq) returns (StandardResponse);
+  rpc RecoverFolder(RecoverFolderReq) returns (StandardResponse);
+  rpc GetDirSchema(GetDirSchemaReq) returns (GetDirSchemaResp);
+  rpc GetFolder(GetFolderReq) returns (GetFolderResp);
+
+  rpc SaveFile(SaveFileReq) returns (StandardResponse);
+  rpc RenameFile(RenameFileReq) returns (StandardResponse);
+  rpc DeleteFile(DeleteFileReq) returns (StandardResponse);
+  rpc RecoverFile(RecoverFileReq) returns (StandardResponse);
+  rpc GetFile(GetFileReq) returns (GetFileResp);
+}
+
+// Common
+
+message Identifier {
+  string Username = 1;
+  string FolderID = 2;
+  string ClientID = 3;
+}
+message StandardResponse {
+  int32 Status = 1;
+  string Description = 2; 
+}
+
+message File {
+  Identifier Identifier = 1;
+  string Path = 2;
+  string Hash = 3;
+  int64 ModTime = 4;
+  int64 Size = 5;
+}
+
+message Folder {
+  Identifier Identifier = 1;
+  string Path = 2;
+  int64 ModTime = 3;
+}
+
+message RenameInfo {
+  string Path = 1;
+  string NewPath = 2;
+}
+
+// Folder
+
+message CreateFolderReq {
+  Identifier Identifier = 1;
+  Folder Folder = 2;
+}
+
+message RenameFolderReq {
+  Identifier Identifier = 1;
+  RenameInfo RenameInfo = 2;
+  int64 ModTime = 3;
+}
+
+message DeleteFolderReq {
+  Identifier Identifier = 1;
+  string Path = 2;
+}
+
+message RecoverFolderReq {
+  Identifier Identifier = 1;
+  string Path = 2;
+}
+
+message GetDirSchemaReq {
+  Identifier Identifier = 1;
+}
+message GetDirSchemaResp {
+  StandardResponse StandardResponse = 1;
+  repeated Folder Folders = 2;
+  repeated File Files = 3;
+}
+
+message GetFolderReq {
+  Identifier Identifier = 1;
+  string Path = 2;
+}
+message GetFolderResp {
+  repeated File File = 1;
+}
+
+// File 
+
+message SaveFileReq {
+  Identifier Identifier = 1;
+  File File = 2; 
+}
+
+message RenameFileReq {
+  Identifier Identifier = 1;
+  RenameInfo RenameInfo = 2;
+}
+
+message DeleteFileReq {
+  Identifier Identifier = 1;
+  string Path = 2;
+}
+
+message RecoverFileReq {
+  Identifier Identifier = 1;
+  string Path = 2;
+}
+
+message GetFileReq {
+  Identifier Identifier = 1;
+}
+message GetFileResp {
+  File File = 1;
+}
