@@ -1,0 +1,110 @@
+package grpc
+
+import (
+	"context"
+
+	pb "github.com/gobox-preegnees/file_manager/api/contract_grpc"
+	"github.com/gobox-preegnees/file_manager/internal/domain/entity"
+)
+
+const CODE_OK = 100
+
+func (s *server) DeleteFile(ctx context.Context, req *pb.DeleteFileReq) (*pb.StandardResponse, error) {
+
+	err := s.fileUsecase.DeleteFile(
+		ctx,
+		entity.Identifier{
+			Username: req.Identifier.Username,
+			FolderID: req.Identifier.FolderID,
+			ClientID: req.Identifier.ClientID,
+		},
+		req.Path,
+		req.Hash,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &pb.StandardResponse{
+		Status: CODE_OK,
+	}, nil
+}
+
+func (s *server) GetFiles(ctx context.Context, req *pb.GetFilesReq) (*pb.GetFilesResp, error) {
+
+	files, err := s.fileUsecase.GetFiles(
+		ctx,
+		entity.Identifier{
+			Username: req.Identifier.Username,
+			FolderID: req.Identifier.FolderID,
+			ClientID: req.Identifier.ClientID,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	pbFiles := make([]*pb.File, len(files))
+	for _, file := range files {
+		pbFiles = append(pbFiles, &pb.File{
+			Path:        file.Path,
+			Hash:        file.Hash,
+			VirtualName: file.VirtualName,
+			ModTime:     file.ModTime,
+			Size:        file.Size,
+		})
+	}
+
+	return &pb.GetFilesResp{
+		StandardResponse: &pb.StandardResponse{
+			Status: CODE_OK,
+		},
+		File: pbFiles,
+	}, nil
+}
+
+func (s *server) RenameFile(ctx context.Context, req *pb.RenameFileReq) (*pb.StandardResponse, error) {
+
+	err := s.fileUsecase.RenameFile(ctx,
+		entity.Identifier{
+			Username: req.Identifier.Username,
+			FolderID: req.Identifier.FolderID,
+			ClientID: req.Identifier.ClientID,
+		},
+		req.RenameInfo.OldPath,
+		req.RenameInfo.NewPath,
+		req.RenameInfo.Hash,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.StandardResponse{
+		Status: CODE_OK,
+	}, nil
+}
+
+func (s *server) SaveFile(ctx context.Context, req *pb.SaveFileReq) (*pb.StandardResponse, error) {
+
+	err := s.fileUsecase.SaveFile(
+		ctx,
+		entity.Identifier{
+			Username: req.Identifier.Username,
+			FolderID: req.Identifier.FolderID,
+			ClientID: req.Identifier.ClientID,
+		},
+		entity.File{
+			Path:        req.File.Path,
+			Hash:        req.File.Hash,
+			Size:        req.File.Size,
+			ModTime:     req.File.ModTime,
+			VirtualName: req.File.VirtualName,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.StandardResponse{
+		Status: CODE_OK,
+	}, nil
+}
