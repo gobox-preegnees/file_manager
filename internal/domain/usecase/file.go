@@ -17,7 +17,7 @@ type UpdateMoreReqDTO struct {
 	OldPath string
 	NewPath string
 }
-type CreateReqOne struct {
+type CreateOneReqDTO struct {
 	entity.Identifier
 	entity.File
 }
@@ -37,7 +37,7 @@ type DeleteMoreDTO struct {
 }
 
 type IFileStorage interface {
-	CreateOne(ctx context.Context, createReqOne CreateReqOne) (err error)
+	CreateOne(ctx context.Context, createOneReqDTO CreateOneReqDTO) (err error)
 	ReadMore(ctx context.Context, readMoreReqDTO ReadMoreReqDTO) (readMoreRespDTO ReadMoreRespDTO, err error)
 	UpdateOne(ctx context.Context, updateOneReqDTO UpdateOneReqDTO) (err error)
 	UpdateMore(ctx context.Context, updateMoreReqDTO UpdateMoreReqDTO) (err error)
@@ -50,14 +50,16 @@ type fileUsecase struct {
 }
 
 func New(fileStorage IFileStorage) fileUsecase {
+	
 	return fileUsecase{
 		fileStorage: fileStorage,
 	}
 }
 
 func (f *fileUsecase) DeleteFile(ctx context.Context, identifier entity.Identifier, path string, hash string) error {
+	
 	if hash == "" {
-		err := f.fileStorage.DeleteMore(ctx, DeleteMoreDTO{
+		err := f.fileStorage.DeleteOne(ctx, DeleteOneDTO{
 			Identifier: identifier,
 			Path:       path,
 		})
@@ -77,6 +79,7 @@ func (f *fileUsecase) DeleteFile(ctx context.Context, identifier entity.Identifi
 }
 
 func (f *fileUsecase) GetFiles(ctx context.Context, identifier entity.Identifier) ([]entity.File, error) {
+	
 	files, err := f.fileStorage.ReadMore(ctx, ReadMoreReqDTO{
 		Identifier: identifier,
 	})
@@ -87,6 +90,7 @@ func (f *fileUsecase) GetFiles(ctx context.Context, identifier entity.Identifier
 }
 
 func (f *fileUsecase) RenameFile(ctx context.Context, identifier entity.Identifier, oldPath string, newPath string, hash string) error {
+	
 	if hash == "" {
 		err := f.fileStorage.UpdateOne(ctx, UpdateOneReqDTO{
 			Identifier: identifier,
@@ -110,7 +114,8 @@ func (f *fileUsecase) RenameFile(ctx context.Context, identifier entity.Identifi
 }
 
 func (f *fileUsecase) SaveFile(ctx context.Context, identifier entity.Identifier, file entity.File) error {
-	err := f.fileStorage.CreateOne(ctx, CreateReqOne{
+	
+	err := f.fileStorage.CreateOne(ctx, CreateOneReqDTO{
 		Identifier: identifier,
 		File:       file,
 	})
