@@ -3,46 +3,19 @@ package file_usecase
 import (
 	"context"
 
-	grpc_controller "github.com/gobox-preegnees/file_manager/internal/controller/grpc"
+	grpcController "github.com/gobox-preegnees/file_manager/internal/controller/grpc"
 	entity "github.com/gobox-preegnees/file_manager/internal/domain/entity"
+	storageDTO "github.com/gobox-preegnees/file_manager/internal/adapters/storage"
 )
 
-type UpdateOneReqDTO struct {
-	entity.Identifier
-	OldPath string
-	NewPath string
-}
-type UpdateMoreReqDTO struct {
-	entity.Identifier
-	OldPath string
-	NewPath string
-}
-type CreateOneReqDTO struct {
-	entity.Identifier
-	entity.File
-}
-type ReadMoreReqDTO struct {
-	entity.Identifier
-}
-type ReadMoreRespDTO struct {
-	Files []entity.File
-}
-type DeleteOneDTO struct {
-	entity.Identifier
-	Path string
-}
-type DeleteMoreDTO struct {
-	entity.Identifier
-	Path string
-}
-
 type IFileStorage interface {
-	CreateOne(ctx context.Context, createOneReqDTO CreateOneReqDTO) (err error)
-	ReadMore(ctx context.Context, readMoreReqDTO ReadMoreReqDTO) (readMoreRespDTO ReadMoreRespDTO, err error)
-	UpdateOne(ctx context.Context, updateOneReqDTO UpdateOneReqDTO) (err error)
-	UpdateMore(ctx context.Context, updateMoreReqDTO UpdateMoreReqDTO) (err error)
-	DeleteOne(ctx context.Context, deleteOne DeleteOneDTO) (err error)
-	DeleteMore(ctx context.Context, deleteMore DeleteMoreDTO) (err error)
+	CreateOne(ctx context.Context, createReqDTO storageDTO.CreateReqDTO) (err error)
+	FindOneByPath(ctx context.Context, findOneReqDTO storageDTO.FindOneReqDTO) (FindOneRespDTO storageDTO.FindOneRespDTO, err error)
+	FindAll(ctx context.Context, findAllReqDTO storageDTO.FindAllReqDTO) (FindAllRespDTO storageDTO.FindAllRespDTO, err error)
+	UpdateOne(ctx context.Context, updateOneReqDTO storageDTO.UpdateOneReqDTO) (err error)
+	UpdateAll(ctx context.Context, updateAllReqDTO storageDTO.UpdateAllReqDTO) (err error)
+	DeleteOne(ctx context.Context, deleteOneReqDTO storageDTO.DeleteOneReqDTO) (err error)
+	DeleteAll(ctx context.Context, deleteAllReqDTO storageDTO.DeleteAllReqDTO) (err error)
 }
 
 type fileUsecase struct {
@@ -59,7 +32,7 @@ func New(fileStorage IFileStorage) fileUsecase {
 func (f *fileUsecase) DeleteFile(ctx context.Context, identifier entity.Identifier, path string, hash string) error {
 	
 	if hash == "" {
-		err := f.fileStorage.DeleteOne(ctx, DeleteOneDTO{
+		err := f.fileStorage.DeleteOne(ctx, storageDTO.DeleteOneReqDTO{
 			Identifier: identifier,
 			Path:       path,
 		})
@@ -67,7 +40,7 @@ func (f *fileUsecase) DeleteFile(ctx context.Context, identifier entity.Identifi
 			return err
 		}
 	} else {
-		err := f.fileStorage.DeleteMore(ctx, DeleteMoreDTO{
+		err := f.fileStorage.DeleteAll(ctx, storageDTO.DeleteAllReqDTO{
 			Identifier: identifier,
 			Path:       path,
 		})
@@ -80,7 +53,7 @@ func (f *fileUsecase) DeleteFile(ctx context.Context, identifier entity.Identifi
 
 func (f *fileUsecase) GetFiles(ctx context.Context, identifier entity.Identifier) ([]entity.File, error) {
 	
-	files, err := f.fileStorage.ReadMore(ctx, ReadMoreReqDTO{
+	files, err := f.fileStorage.FindAll(ctx, storageDTO.FindAllReqDTO{
 		Identifier: identifier,
 	})
 	if err != nil {
@@ -92,7 +65,7 @@ func (f *fileUsecase) GetFiles(ctx context.Context, identifier entity.Identifier
 func (f *fileUsecase) RenameFile(ctx context.Context, identifier entity.Identifier, oldPath string, newPath string, hash string) error {
 	
 	if hash == "" {
-		err := f.fileStorage.UpdateOne(ctx, UpdateOneReqDTO{
+		err := f.fileStorage.UpdateOne(ctx, storageDTO.UpdateOneReqDTO{
 			Identifier: identifier,
 			OldPath:    oldPath,
 			NewPath:    newPath,
@@ -101,7 +74,7 @@ func (f *fileUsecase) RenameFile(ctx context.Context, identifier entity.Identifi
 			return err
 		}
 	} else {
-		err := f.fileStorage.UpdateMore(ctx, UpdateMoreReqDTO{
+		err := f.fileStorage.UpdateAll(ctx, storageDTO.UpdateAllReqDTO{
 			Identifier: identifier,
 			OldPath:    oldPath,
 			NewPath:    newPath,
@@ -115,7 +88,7 @@ func (f *fileUsecase) RenameFile(ctx context.Context, identifier entity.Identifi
 
 func (f *fileUsecase) SaveFile(ctx context.Context, identifier entity.Identifier, file entity.File) error {
 	
-	err := f.fileStorage.CreateOne(ctx, CreateOneReqDTO{
+	err := f.fileStorage.CreateOne(ctx, storageDTO.CreateReqDTO{
 		Identifier: identifier,
 		File:       file,
 	})
@@ -125,4 +98,4 @@ func (f *fileUsecase) SaveFile(ctx context.Context, identifier entity.Identifier
 	return nil
 }
 
-var _ grpc_controller.IFileUsecase = (*fileUsecase)(nil)
+var _ grpcController.IFileUsecase = (*fileUsecase)(nil)

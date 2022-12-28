@@ -37,6 +37,12 @@ message RenameInfo {
   string Hash = 4;
 }
 
+message ConfirmFileReq {
+  Identifier Identifier = 1;
+  string Path = 2;
+  string Hash = 3;
+}
+
 message GetFilesReq {
   Identifier Identifier = 1;
 }

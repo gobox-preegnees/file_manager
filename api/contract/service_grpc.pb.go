@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             v3.21.5
-// source: api/contract_grpc/service.proto
+// source: api/contract/service.proto
 
 package __
 
@@ -209,5 +209,5 @@ var FileManager_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "api/contract_grpc/service.proto",
+	Metadata: "api/contract/service.proto",
 }
