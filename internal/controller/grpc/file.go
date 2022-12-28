@@ -46,11 +46,11 @@ func (s *server) GetFiles(ctx context.Context, req *pb.GetFilesReq) (*pb.GetFile
 	pbFiles := make([]*pb.File, len(files))
 	for _, file := range files {
 		pbFiles = append(pbFiles, &pb.File{
-			Path:        file.Path,
-			Hash:        file.Hash,
+			Path:        file.FileName,
+			Hash:        file.HashSum,
 			VirtualName: file.VirtualName,
 			ModTime:     file.ModTime,
-			Size:        file.Size,
+			Size:        file.FileSize,
 		})
 	}
 
@@ -93,9 +93,9 @@ func (s *server) SaveFile(ctx context.Context, req *pb.SaveFileReq) (*pb.Standar
 			ClientID: req.Identifier.ClientID,
 		},
 		entity.File{
-			Path:        req.File.Path,
-			Hash:        req.File.Hash,
-			Size:        req.File.Size,
+			FileName:    req.File.Path,
+			HashSum:     req.File.Hash,
+			FileSize:    req.File.Size,
 			ModTime:     req.File.ModTime,
 			VirtualName: req.File.VirtualName,
 		},

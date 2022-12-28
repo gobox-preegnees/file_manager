@@ -22,12 +22,12 @@ services:
     ports:
       - "5431:5432"
     # volumes:
-      # - ./data:/var/lib/postgresql/data
+    #   - ./data:/var/lib/postgresql/data
   migrate:
     image: migrate/migrate
     restart: on-failure
     volumes:
-        - ../migrations:/migrations
+        - ../migrations/test:/migrations
     command: ["-path", "/migrations", "-database",  "postgres://postgres:postgres@postgres:5432/postgres?sslmode=disable", "up"]
     depends_on: 
         - postgres
