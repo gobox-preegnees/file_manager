@@ -45,25 +45,25 @@ func (p *postgresql) FindAll(ctx context.Context, username string, folder string
 	}
 	defer rows.Close()
 
-	var items []repoDTO.FileDTO = make([]repoDTO.FileDTO, 0)
+	var files []repoDTO.FileDTO = make([]repoDTO.FileDTO, 0)
 	for rows.Next() {
-		var item repoDTO.FileDTO = repoDTO.FileDTO{}
+		var file repoDTO.FileDTO = repoDTO.FileDTO{}
 		err := rows.Scan(
-			&item.Client,
-			&item.FileName,
-			&item.HashSum,
-			&item.SizeFile,
-			&item.ModTime,
-			&item.VirtualName,
-			&item.State,
-			&item.Removed,
+			&file.Client,
+			&file.FileName,
+			&file.HashSum,
+			&file.SizeFile,
+			&file.ModTime,
+			&file.VirtualName,
+			&file.State,
+			&file.Removed,
 		)
 		if err != nil {
 			return nil, err
 		}
-		items = append(items, item)
+		files = append(files, file)
 	}
-	return items, nil
+	return files, nil
 }
 
 func (p *postgresql) FindOneByPath(ctx context.Context, username string, folder string, fileName string) (repoDTO.FileDTO, error) {
@@ -80,24 +80,24 @@ func (p *postgresql) FindOneByPath(ctx context.Context, username string, folder 
 			AND folders.folder = $2
 			AND file_name = $3
 		`
-	item := repoDTO.FileDTO{}
+	var file repoDTO.FileDTO = repoDTO.FileDTO{}
 	err := p.conn.QueryRow(ctx, sql, username, folder, fileName).Scan(
-		&item.Client,
-		&item.FileName,
-		&item.HashSum,
-		&item.SizeFile,
-		&item.ModTime,
-		&item.VirtualName,
-		&item.State,
-		&item.Removed,
+		&file.Client,
+		&file.FileName,
+		&file.HashSum,
+		&file.SizeFile,
+		&file.ModTime,
+		&file.VirtualName,
+		&file.State,
+		&file.Removed,
 	)
 	if err != nil {
 		return repoDTO.FileDTO{}, err
 	}
-	return item, nil
+	return file, nil
 }
 
-func (p *postgresql) Save(ctx context.Context, username, folder string, file repoDTO.FileDTO) error {
+func (p *postgresql) SaveOne(ctx context.Context, username, folder string, file repoDTO.FileDTO) error {
 
 	sql :=
 		`
@@ -108,11 +108,13 @@ func (p *postgresql) Save(ctx context.Context, username, folder string, file rep
 			(
 				SELECT folder_id
 				FROM folders
-				WHERE folder=$6 
+				WHERE removed=false
+					AND folder=$6 
 					AND user_id=(
 								SELECT user_id 
 								FROM users
 								WHERE username=$7
+									AND removed=false
 								)
 			)
 		);
@@ -134,11 +136,13 @@ func (p *postgresql) UpdateState(ctx context.Context, username, folder, client, 
 			AND folder_id=(
 						SELECT folder_id
 						FROM folders
-						WHERE folder=$6
+						WHERE removed=false
+							AND folder=$6
 							AND user_id=(
 										SELECT user_id
 										FROM users
 										WHERE username=$7
+											AND removed=false
 										)
 						)
 		`
@@ -156,11 +160,13 @@ func (p *postgresql) UpdateFileName(ctx context.Context, username, folder, clien
 			WHERE folder_id=(
 							SELECT folder_id
 							FROM folders
-							WHERE folder=$4
+							WHERE removed=false
+								AND folder=$4
 								AND user_id=(
 											SELECT user_id
 											FROM users
 											WHERE username=$5
+												AND removed=false
 											)
 							)
 			`

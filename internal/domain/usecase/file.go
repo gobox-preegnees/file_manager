@@ -11,7 +11,7 @@ import (
 type FileRepo interface {
 	FindOneByPath(ctx context.Context, username, folder, fileName string) (repoDTO.FileDTO, error)
 	FindAll(ctx context.Context, username, folder string) ([]repoDTO.FileDTO, error)
-	Save(ctx context.Context, username, folder string, fileName repoDTO.FileDTO) (error)
+	SaveOne(ctx context.Context, username, folder string, fileName repoDTO.FileDTO) (error)
 	UpdateState(ctx context.Context, username, folder, client, fileName, hash, virtualName string, state int) (error)
 	UpdateFileName(ctx context.Context, username, folder, client, oldfileName, newfileName, hash string) (error)
 	DeleteFile(ctx context.Context, username, folder, client, fileName, hash string) (error)
