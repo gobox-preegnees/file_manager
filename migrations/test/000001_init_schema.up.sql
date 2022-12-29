@@ -25,20 +25,12 @@ CREATE TABLE IF NOT EXISTS files (
     virtual_name TEXT DEFAULT '',
     size_file INT DEFAULT 0,
     hash_sum TEXT DEFAULT '', 
+    state INT NOT NULL DEFAULT 1,
 
     folder_id INT NOT NULL,
     FOREIGN KEY (folder_id) REFERENCES folders (folder_id),
     user_id INT NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users (user_id)
-);
-
-CREATE TABLE IF NOT EXISTS states (
-    state_id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-
-    state INT NOT NULL DEFAULT 1,
-
-    file_id INT NOT NULL,
-    FOREIGN KEY (file_id) REFERENCES files (file_id)
 );
 
 -- Value 1
@@ -61,7 +53,8 @@ INSERT INTO
         hash_sum,
         removed,
         folder_id,
-        user_id
+        user_id,
+        state
     )
 VALUES
     (
@@ -72,13 +65,9 @@ VALUES
         'ghy67678',
         false,
         1,
+        1,
         1
     );
-
-INSERT INTO
-    states (state, file_id)
-VALUES
-    (1, 1);
 
 -- Value 2
 
@@ -101,22 +90,19 @@ INSERT INTO
         virtual_name,
         removed,
         folder_id,
-        user_id
+        user_id,
+        state
     )
 VALUES
     (
         'c1',
-        'C:\2\abc.txt',
+        'path',
         12345,
         2048,
         'ghy67678',
         'virtualname1',
         false,
         2,
-        2
+        2,
+        1
     );
-
-INSERT INTO
-    states (state, file_id)
-VALUES
-    (1, 2);

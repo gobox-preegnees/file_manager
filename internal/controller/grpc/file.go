@@ -50,7 +50,7 @@ func (s *server) GetFiles(ctx context.Context, req *pb.GetFilesReq) (*pb.GetFile
 			Hash:        file.HashSum,
 			VirtualName: file.VirtualName,
 			ModTime:     file.ModTime,
-			Size:        file.FileSize,
+			Size:        file.SizeFile,
 		})
 	}
 
@@ -95,7 +95,7 @@ func (s *server) SaveFile(ctx context.Context, req *pb.SaveFileReq) (*pb.Standar
 		entity.File{
 			FileName:    req.File.Path,
 			HashSum:     req.File.Hash,
-			FileSize:    req.File.Size,
+			SizeFile:    req.File.Size,
 			ModTime:     req.File.ModTime,
 			VirtualName: req.File.VirtualName,
 		},

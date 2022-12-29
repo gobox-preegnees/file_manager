@@ -5,5 +5,6 @@ import "github.com/gobox-preegnees/file_manager/internal/domain/entity"
 type FileDTO struct {
 	Client string
 	entity.File
-	State int
+	State   int
+	Removed bool
 }
