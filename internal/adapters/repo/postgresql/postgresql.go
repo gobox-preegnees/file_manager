@@ -270,11 +270,11 @@ func (p *postgresql) CreateFolder(ctx context.Context, username, folder string) 
 				SELECT user_id 
 				FROM users 
 				WHERE username=$2 
-					AND removed=true
+					AND removed=false
 			)
 		)
 		`
-	_, err := p.conn.Exec(ctx, sql, username)
+	_, err := p.conn.Exec(ctx, sql, folder, username)
 	return err
 }
 
@@ -292,6 +292,48 @@ func (p *postgresql) DeleteFolder(ctx context.Context, username, folder string) 
 		`
 	_, err := p.conn.Exec(ctx, sql, folder, username)
 	return err
+}
+
+// /////////////////////////////////////////////////////////////
+func (p *postgresql) CreateOwner(ctx context.Context, username, folder string) (int, error) {
+
+	sql :=
+		`
+		INSERT INTO owners (username, folder)
+		VALUES ($1, $2)
+		RETURNING owner_id
+		`
+	var id int
+	err := p.conn.QueryRow(ctx, sql, username, folder).Scan(&id)
+	return id, err
+}
+
+func (p *postgresql) RenameOwner(ctx context.Context, ownerID int, newFolderName string) (int, error) {
+
+	sql :=
+		`
+		UPDATE owners
+		SET folder=$1
+		WHERE owner_id=$2
+		RETURNING owner_id
+		`
+	var id int
+	err := p.conn.QueryRow(ctx, sql, newFolderName, ownerID).Scan(&id)
+	return id, err
+}
+
+func (p *postgresql) DeleteOwner(ctx context.Context, ownerID int) (int, error) {
+
+	sql :=
+		`
+		UPDATE owners
+		SET removed=true
+		WHERE owner_id=$1
+		RETURNING owner_id
+		`
+	var id int
+	err := p.conn.QueryRow(ctx, sql, ownerID).Scan(&id)
+	return id, err
 }
 
 var _ usecase.FileRepo = (*postgresql)(nil)
