@@ -12,9 +12,14 @@ type FileRepo interface {
 	FindOneByPath(ctx context.Context, username, folder, fileName string) (repoDTO.FileDTO, error)
 	FindAll(ctx context.Context, username, folder string) ([]repoDTO.FileDTO, error)
 	Save(ctx context.Context, username, folder string, fileName repoDTO.FileDTO) (error)
-	UpdateState(ctx context.Context, username, folder, client, fileName string) (error)
+	UpdateState(ctx context.Context, username, folder, client, fileName, hash, virtualName string, state int) (error)
 	UpdateFileName(ctx context.Context, username, folder, client, oldfileName, newfileName, hash string) (error)
 	DeleteFile(ctx context.Context, username, folder, client, fileName, hash string) (error)
+	
+	CreateUser(ctx context.Context, username string) (error)
+	DeleteUser(ctx context.Context, username string) (error)
+	CreateFolder(ctx context.Context, username, folder string) (error)
+	DeleteFolder(ctx context.Context, username, folder string) (error)
 }
 
 type fileUsecase struct {
