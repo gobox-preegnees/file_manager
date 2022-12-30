@@ -2,18 +2,25 @@ package postgresql
 
 import (
 	"context"
+	"errors"
 
 	repoDTO "github.com/gobox-preegnees/file_manager/internal/adapters/repo"
-	// usecase "github.com/gobox-preegnees/file_manager/internal/domain/usecase"
 	state "github.com/gobox-preegnees/file_manager/pkg/state"
+	usecase "github.com/gobox-preegnees/file_manager/internal/domain/usecase"
 
 	"github.com/jackc/pgx/v5"
 )
 
+var (
+	ErrInvalidOwner = errors.New("Invalid Owner On FindAllByOwner")
+)
+
+// postgresql. Implementation of the usecase package interface
 type postgresql struct {
 	conn *pgx.Conn
 }
 
+// New. Create a new Postgres
 func New(ctx context.Context, url string) (*postgresql, error) {
 
 	conn, err := pgx.Connect(ctx, url)
@@ -27,79 +34,8 @@ func New(ctx context.Context, url string) (*postgresql, error) {
 	return &postgresql{conn: conn}, nil
 }
 
-func (p *postgresql) FindAll(ctx context.Context, username string, folder string) ([]repoDTO.FileDTO, error) {
-
-	sql :=
-		`
-		SELECT client, file_name, hash_sum, size_file, mod_time, virtual_name, state, files.removed 
-		FROM users
-		INNER JOIN folders ON folders.user_id = users.user_id
-		INNER JOIN files ON folders.folder_id = files.folder_id
-		WHERE folders.removed = FALSE 
-			AND users.removed = FALSE 
-			AND users.username = $1 
-			AND folders.folder = $2
-		`
-	rows, err := p.conn.Query(ctx, sql, username, folder)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var files []repoDTO.FileDTO = make([]repoDTO.FileDTO, 0)
-	for rows.Next() {
-		var file repoDTO.FileDTO = repoDTO.FileDTO{}
-		err := rows.Scan(
-			&file.Client,
-			&file.FileName,
-			&file.HashSum,
-			&file.SizeFile,
-			&file.ModTime,
-			&file.VirtualName,
-			&file.State,
-			&file.Removed,
-		)
-		if err != nil {
-			return nil, err
-		}
-		files = append(files, file)
-	}
-	return files, nil
-}
-
-func (p *postgresql) FindOneByPath(ctx context.Context, username string, folder string, fileName string) (repoDTO.FileDTO, error) {
-
-	sql :=
-		`
-		SELECT client, file_name, hash_sum, size_file, mod_time, virtual_name, state, files.removed 
-		FROM users
-		INNER JOIN folders ON folders.user_id = users.user_id
-		INNER JOIN files ON folders.folder_id = files.folder_id
-		WHERE folders.removed = FALSE 
-			AND users.removed = FALSE
-			AND users.username = $1 
-			AND folders.folder = $2
-			AND file_name = $3
-		`
-	var file repoDTO.FileDTO = repoDTO.FileDTO{}
-	err := p.conn.QueryRow(ctx, sql, username, folder, fileName).Scan(
-		&file.Client,
-		&file.FileName,
-		&file.HashSum,
-		&file.SizeFile,
-		&file.ModTime,
-		&file.VirtualName,
-		&file.State,
-		&file.Removed,
-	)
-	if err != nil {
-		return repoDTO.FileDTO{}, err
-	}
-	return file, nil
-}
-
-// /////////////////////////////////////////////////////////////
-func (p *postgresql) SaveOwner(ctx context.Context, username, folder string) (int, error) {
+// Save Owner. Stores UserName + Folder . This method will participate in a distributed transaction
+func (p *postgresql) SaveOwner(ctx context.Context, saveOwnerDTO repoDTO.SaveOwnerDTO) (int, error) {
 
 	sql :=
 		`
@@ -108,11 +44,12 @@ func (p *postgresql) SaveOwner(ctx context.Context, username, folder string) (in
 		RETURNING owner_id
 		`
 	var id int
-	err := p.conn.QueryRow(ctx, sql, username, folder).Scan(&id)
+	err := p.conn.QueryRow(ctx, sql, saveOwnerDTO.Username, saveOwnerDTO.Folder).Scan(&id)
 	return id, err
 }
 
-func (p *postgresql) RenameOwner(ctx context.Context, ownerID int, newFolderName string) error {
+// Rename Owner. Renames Folder. This method will participate in a distributed transaction
+func (p *postgresql) RenameOwner(ctx context.Context, renameOwnerDTO repoDTO.RenameOwnerDTO) error {
 
 	sql :=
 		`
@@ -121,12 +58,12 @@ func (p *postgresql) RenameOwner(ctx context.Context, ownerID int, newFolderName
 		WHERE owner_id=$2
 		RETURNING owner_id
 		`
-
-	_, err := p.conn.Exec(ctx, sql, newFolderName, ownerID)
+	_, err := p.conn.Exec(ctx, sql, renameOwnerDTO.NewName, renameOwnerDTO.OwnerID)
 	return err
 }
 
-func (p *postgresql) DeleteOwner(ctx context.Context, ownerID int) error {
+// Delete Owner. Removes the owner (the user will not be able to restore). This method will participate in a distributed transaction
+func (p *postgresql) DeleteOwner(ctx context.Context, deleteOwnerDTO repoDTO.DeleteOwnerDTO) error {
 
 	sql :=
 		`
@@ -134,42 +71,60 @@ func (p *postgresql) DeleteOwner(ctx context.Context, ownerID int) error {
 		SET removed=true
 		WHERE owner_id=$1
 		`
-
-	_, err := p.conn.Exec(ctx, sql, ownerID)
+	_, err := p.conn.Exec(ctx, sql, deleteOwnerDTO.OwnerID)
 	return err
 }
 
-func (p *postgresql) RestoreOwner(ctx context.Context, ownerID string) error {
+// FindAllOwners. Gets all Folders (Folders that are synchronized, virtual folders, not real ones) by username
+func (p *postgresql) FindAllOwners(ctx context.Context, findAllOwnersReqDTO repoDTO.FindAllOwnersReqDTO) (repoDTO.FindAllOwnersRespDTO, error) {
 
 	sql :=
 		`
-		UPDATE owners
-		SET removed=false
-		WHERE owner_id=$1
-		`
-	_, err := p.conn.Exec(ctx, sql, ownerID)
-	return err
+        SELECT owner_id, username, folder
+		FROM owners
+        WHERE username=$1
+        `
+	rows, err := p.conn.Query(ctx, sql, findAllOwnersReqDTO.Username)
+	if err != nil {
+		return repoDTO.FindAllOwnersRespDTO{}, err
+	}
+	defer rows.Close()
+
+	owners := make([]repoDTO.Owner, 0)
+	for rows.Next() {
+		owner := repoDTO.Owner{}
+		err := rows.Scan(&owner.OwnerId, &owner.Username, &owner.Folder)
+		if err != nil {
+			return repoDTO.FindAllOwnersRespDTO{}, err
+		}
+		owners = append(owners, owner)
+	}
+	return repoDTO.FindAllOwnersRespDTO{
+		Owners: owners,
+	}, nil
 }
 
+// Save file. Saves the file, for the file the status is = 100, 
+// for the folder = 300 (since the folder has no size, hash and does not need to be uploaded to the server)
 func (p *postgresql) SaveFile(ctx context.Context, saveFileReqDTO repoDTO.SaveFileReqDTO) (int, error) {
 
 	saveFile := func(state int) (int, error) {
 		sql :=
 			`
-		INSERT INTO 
-		files (client, file_name, mod_time, size_file, hash_sum, state, owner_id)
-		VALUES (
-			$1, $2, $3, $4, $5, $6
-			(
-				SELECT owner_id
-				FROM owners
-				WHERE removed=false
-					AND folder=$7 
-					AND username=$8
+			INSERT INTO 
+			files (client, file_name, mod_time, size_file, hash_sum, state, owner_id)
+			VALUES (
+				$1, $2, $3, $4, $5, $6
+				(
+					SELECT owner_id
+					FROM owners
+					WHERE removed=false
+						AND folder=$7 
+						AND username=$8
+				)
 			)
-		)
-		RETURNING file_id
-        `
+			RETURNING file_id
+			`
 
 		var id int
 		err := p.conn.QueryRow(
@@ -192,6 +147,13 @@ func (p *postgresql) SaveFile(ctx context.Context, saveFileReqDTO repoDTO.SaveFi
 	return id, err
 }
 
+// SetState. Sets the state of the file at the current moment. 
+// This only applies to files. When a file is uploaded to the server, it saves its state:
+// 1. Created: when saving to the database (before the actual loading), the file has such a state, code = 100.
+// 2. Uploading: when the file starts uploading to the server, it has code = 200.
+// 3. Uploaded: when the file is definitely uploaded to the server, it has code = 300.
+// 4. For any error during the upload process, the file code becomes 400.
+// VirtualName - file name on the disk (randomly generated on save).
 func (p *postgresql) SetState(ctx context.Context, setStateReqDTO repoDTO.SetStateReqDTO) error {
 
 	sql :=
@@ -221,6 +183,8 @@ func (p *postgresql) SetState(ctx context.Context, setStateReqDTO repoDTO.SetSta
 	return err
 }
 
+// RenameFile. Renames files by file name, if this is a folder name, 
+// then all files and folders in it will be renamed
 func (p *postgresql) RenameFile(ctx context.Context, renameFileReqDTO repoDTO.RenameFileReqDTO) error {
 
 	sql :=
@@ -245,6 +209,8 @@ func (p *postgresql) RenameFile(ctx context.Context, renameFileReqDTO repoDTO.Re
 	return err
 }
 
+// DeleteFile. Deletes files by file name, if this is a folder name, 
+// then all files and folders in it will be deleted
 func (p *postgresql) DeleteFile(ctx context.Context, deleteFileReqDTO repoDTO.DeleteFileReqDTO) error {
 
 	sql :=
@@ -266,30 +232,29 @@ func (p *postgresql) DeleteFile(ctx context.Context, deleteFileReqDTO repoDTO.De
 		deleteFileReqDTO.Client, deleteFileReqDTO.FileName,
 		deleteFileReqDTO.Folder, deleteFileReqDTO.Username,
 	)
-
 	return err
 }
 
 // RestoreFile. Restoring one file if it has a hash,
 // or restores many files and folders if there is no
-// hash (the folder does not have a hash, the folder contains files).
+// hash (there is no hash in the folder, the folder contains files and they will be restored).
 // You can restore only through your personal account (Web).
 func (p *postgresql) RestoreFile(ctx context.Context, restoreFileReqDTO repoDTO.RestoreFileReqDTO) error {
 
 	sql :=
 		`
-			UPDATE files
-			SET removed=false, client=$1
-			WHERE file_name LIKE "$2%"
-				AND owner_id=(
-							SELECT owner_id
-							FROM owners
-							WHERE removed=false
-								AND folder=$3
-								AND username=$4
-							)
-			RETURNING file_id
-			`
+		UPDATE files
+		SET removed=false, client=$1
+		WHERE file_name LIKE "$2%"
+			AND owner_id=(
+						SELECT owner_id
+						FROM owners
+						WHERE removed=false
+							AND folder=$3
+							AND username=$4
+						)
+		RETURNING file_id
+		`
 	_, err := p.conn.Exec(
 		ctx, sql,
 		restoreFileReqDTO.Username, restoreFileReqDTO.FileName,
@@ -298,4 +263,58 @@ func (p *postgresql) RestoreFile(ctx context.Context, restoreFileReqDTO repoDTO.
 	return err
 }
 
-// var _ usecase.FileRepo = (*postgresql)(nil)
+// FindAllFilesByOwner. Gets all files by owner.
+// You can get both by owner_id or by username + folder.
+func (p *postgresql) FindAllFilesByOwner(ctx context.Context, findAllFilesByOwnerReqDTO repoDTO.FindAllFilesByOwnerReqDTO) (repoDTO.FindAllFilesByOwnerRespDTO, error) {
+
+	sql :=
+		`
+		SELECT file_id, files.removed, virtual_name, state, hash_sum, file_name, size_file, owner_id, mod_time, client, username, folder
+		FROM owners
+		INNER JOIN files ON files.owner_id=owners.owner_id
+		WHERE owners.removed=false 
+		`
+	var err error
+	var rows pgx.Rows
+	if findAllFilesByOwnerReqDTO.OwnerId != 0 {
+		sql = sql + " AND owner_id=$1"
+		rows, err = p.conn.Query(ctx, sql, findAllFilesByOwnerReqDTO.OwnerId)
+	} else if findAllFilesByOwnerReqDTO.Folder != "" && findAllFilesByOwnerReqDTO.Username != "" {
+		sql = sql + " AND folder=$1 AND username=$2"
+		rows, err = p.conn.Query(ctx, sql, findAllFilesByOwnerReqDTO.OwnerId)
+	} else {
+		err = ErrInvalidOwner
+	}
+	if err != nil {
+		return repoDTO.FindAllFilesByOwnerRespDTO{}, err
+	}
+	defer rows.Close()
+
+	var files = make([]repoDTO.FullFile, 0)
+	for rows.Next() {
+		var file repoDTO.FullFile = repoDTO.FullFile{}
+		err := rows.Scan(
+			&file.File_id,
+			&file.Removed,
+			&file.VirtualName,
+			&file.State,
+			&file.HashSum,
+			&file.FileName,
+			&file.SizeFile,
+			&file.OwnerId,
+			&file.ModTime,
+			&file.Client,
+			&file.Username,
+			&file.Folder,
+		)
+		if err != nil {
+			return repoDTO.FindAllFilesByOwnerRespDTO{}, err
+		}
+		files = append(files, file)
+	}
+	return repoDTO.FindAllFilesByOwnerRespDTO{
+		Files: files,
+	}, nil
+}
+
+var _ usecase.FileRepo = (*postgresql)(nil)
