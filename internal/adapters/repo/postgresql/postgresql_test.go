@@ -36,6 +36,7 @@ func truncate() {
 func TestSaveOwner(t *testing.T) {
 
 	truncate()
+	defer truncate()
 
 	data := []struct {
 		Username string
@@ -78,13 +79,12 @@ func TestSaveOwner(t *testing.T) {
 			t.Logf("id=%d", id)
 		})
 	}
-
-	truncate()
 }
 
 func TestRenameOwner(t *testing.T) {
 
 	truncate()
+	defer truncate()
 
 	data := []struct {
 		// Create
@@ -131,13 +131,12 @@ func TestRenameOwner(t *testing.T) {
 			}
 		})
 	}
-
-	truncate()
 }
 
 func TestDeleteOwner(t *testing.T) {
 
 	truncate()
+	defer truncate()
 
 	data := []struct {
 		// Create
@@ -181,13 +180,12 @@ func TestDeleteOwner(t *testing.T) {
 			}
 		})
 	}
-
-	truncate()
 }
 
 func TestFindAllOwners(t *testing.T) {
 
 	truncate()
+	defer truncate()
 
 	data := []struct {
 		// Create
@@ -250,86 +248,429 @@ func TestFindAllOwners(t *testing.T) {
 			}
 		})
 	}
-
-	truncate()
 }
 
-// func TestDeleteOwner(t *testing.T) {
+func TestSaveFile(t *testing.T) {
 
-// 	truncate()
+	truncate()
+	defer truncate()
 
-// 	data := []struct {
-// 		Username string
-// 		Folder   string
-// 		Err      bool
-// 	}{
-// 		{
-// 			Username: "u1",
-// 			Folder:   "f1",
-// 			Err:      false,
-// 		},
-// 	}
+	data := []struct {
+		repoDTO.Identifier
+		repoDTO.File
+		ClientId string
+		Err      bool
+	}{
+		{
+			Identifier: repoDTO.Identifier{
+				Username: "1",
+				Folder:   "1",
+			},
+			File: repoDTO.File{
+				FileName: "/tmp/test.txt",
+				SizeFile: 1,
+				HashSum:  "1",
+				ModTime:  1,
+			},
+			ClientId: "1",
+			Err:      false,
+		},
+		{
+			Identifier: repoDTO.Identifier{
+				Username: "1",
+				Folder:   "1",
+			},
+			File: repoDTO.File{
+				FileName: "/tmp/test.txt",
+				SizeFile: 1,
+				HashSum:  "1",
+				ModTime:  1,
+			},
+			ClientId: "1",
+			Err:      true,
+		},
+	}
 
-// 	for _, d := range data {
-// 		t.Run("test", func(t *testing.T) {
-// 			id, _ := postgres.SaveOwner(ctx, d.Username, d.Folder)
-// 			id_, err := postgres.DeleteOwner(ctx, id)
-// 			if d.Err {
-// 				if err != nil {
-// 					t.Errorf("expected none, got error")
-// 				}
-// 			}
-// 			if id_ != id {
-// 				t.Errorf("expected id=%d, got id=%d", id, id_)
-// 			}
-// 		})
-// 	}
+	for _, d := range data {
+		t.Run("test", func(t *testing.T) {
+			_, _ = postgres.SaveOwner(ctx, repoDTO.SaveOwnerDTO{
+				Identifier: d.Identifier,
+			})
 
-// 	_, err := postgres.conn.Exec(ctx, "TRUNCATE TABLE owners CASCADE")
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
+			id, err := postgres.SaveFile(ctx, repoDTO.SaveFileReqDTO{
+				Identifier: d.Identifier,
+				File:       d.File,
+				Client:     d.ClientId,
+			})
+			if err != nil {
+				if !d.Err {
+					t.Errorf("expected none, got error {%v} in create", err)
+				}
+			}
+			if id == 0 {
+				if !d.Err {
+					t.Errorf("expected id, got none")
+				}
+			}
+			t.Logf("%d", id)
+		})
+	}
+}
 
-// 	truncate()
-// }
+func TestSetState(t *testing.T) {
 
-// func TestUpdateOwner(t *testing.T) {
+	truncate()
+	defer truncate()
 
-// 	truncate()
+	data := []struct {
+		repoDTO.Identifier
+		repoDTO.File
+		ClientId    string
+		VirtualName string
+		State       int
+		Err         bool
+	}{
+		{
+			Identifier: repoDTO.Identifier{
+				Username: "1",
+				Folder:   "1",
+			},
+			File: repoDTO.File{
+				FileName: "/tmp/test.txt",
+				SizeFile: 1,
+				HashSum:  "1",
+				ModTime:  1,
+			},
+			ClientId:    "1",
+			VirtualName: "1",
+			State:       200,
+			Err:         false,
+		},
+		{
+			Identifier: repoDTO.Identifier{
+				Username: "1",
+				Folder:   "1",
+			},
+			File: repoDTO.File{
+				FileName: "invalid name",
+				SizeFile: 1,
+				HashSum:  "1",
+				ModTime:  1,
+			},
+			ClientId:    "1",
+			VirtualName: "1",
+			State:       200,
+			Err:         true,
+		},
+	}
 
-// 	data := []struct {
-// 		Username  string
-// 		Folder    string
-// 		NewFolder string
-// 		Err       bool
-// 	}{
-// 		{
-// 			Username:  "u1",
-// 			Folder:    "f1",
-// 			NewFolder: "ff1",
-// 			Err:       false,
-// 		},
-// 	}
+	for _, d := range data {
+		t.Run("test", func(t *testing.T) {
+			_, _ = postgres.SaveOwner(ctx, repoDTO.SaveOwnerDTO{
+				Identifier: d.Identifier,
+			})
 
-// 	for _, d := range data {
-// 		t.Run("test", func(t *testing.T) {
-// 			id, _ := postgres.SaveOwner(ctx, d.Username, d.Folder)
-// 			id_, err := postgres.RenameOwner(ctx, id, d.NewFolder)
-// 			if d.Err {
-// 				if err != nil {
-// 					t.Errorf("expected none, got error")
-// 				}
-// 			}
-// 			if id_ != id {
-// 				t.Errorf("expected id=%d, got id=%d", id, id_)
-// 			}
-// 		})
-// 	}
+			_, _ = postgres.SaveFile(ctx, repoDTO.SaveFileReqDTO{
+				Identifier: d.Identifier,
+				File:       d.File,
+				Client:     d.ClientId,
+			})
 
-// 	_, err := postgres.conn.Exec(ctx, "TRUNCATE TABLE owners CASCADE")
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
+			err := postgres.SetState(ctx, repoDTO.SetStateReqDTO{
+				Identifier: repoDTO.Identifier{
+					Username: d.Username,
+					Folder:   d.Folder,
+				},
+				File:        d.File,
+				VirtualName: d.VirtualName,
+				State:       d.State,
+			})
 
-// 	truncate()
-// }
+			if err != nil {
+				if !d.Err {
+					t.Errorf("expected none, got error {%v} in create", err)
+				}
+			}
+		})
+	}
+}
+
+func TestRenameFile(t *testing.T) {
+
+	truncate()
+	defer truncate()
+
+	data := []struct {
+		repoDTO.Identifier
+		files    []repoDTO.File
+		ClientId string
+		NewName  string
+		OldName  string
+		Err      bool
+	}{
+		{
+			Identifier: repoDTO.Identifier{
+				Username: "1",
+				Folder:   "1",
+			},
+			files: []repoDTO.File{
+				{
+					FileName: "folder/test.txt",
+					SizeFile: 1,
+					HashSum:  "1",
+					ModTime:  1,
+				},
+			},
+			ClientId: "1",
+			NewName:  "FirstTest/newName.txt",
+			OldName:  "folder/test.txt",
+			Err:      false,
+		},
+		{
+			Identifier: repoDTO.Identifier{
+				Username: "1",
+				Folder:   "1",
+			},
+			files: []repoDTO.File{
+				{
+					FileName: "not/test.txt",
+					SizeFile: 2,
+					HashSum:  "2",
+					ModTime:  2,
+				},
+				{
+					FileName: "tmp/test1.abd",
+					SizeFile: 3,
+					HashSum:  "3",
+					ModTime:  3,
+				},
+				{
+					FileName: "tmp/var/.txt",
+					SizeFile: 4,
+					HashSum:  "4",
+					ModTime:  4,
+				},
+				{
+					FileName: "tmp/",
+					SizeFile: 0,
+					HashSum:  "",
+					ModTime:  4,
+				},
+			},
+			ClientId: "2",
+			NewName:  "newName/",
+			OldName:  "tmp/",
+			Err:      false,
+		},
+		{
+			Identifier: repoDTO.Identifier{
+				Username: "1",
+				Folder:   "1",
+			},
+			files: []repoDTO.File{
+				{
+					FileName: "11not/test.txt",
+					SizeFile: 3,
+					HashSum:  "3",
+					ModTime:  3,
+				},
+				{
+					FileName: "tmp/folder/test1.abd",
+					SizeFile: 3,
+					HashSum:  "3",
+					ModTime:  3,
+				},
+				{
+					FileName: "tmp/folder/var/.txt",
+					SizeFile: 4,
+					HashSum:  "4",
+					ModTime:  4,
+				},
+			},
+			ClientId: "2",
+			NewName:  "newName/LOLOLOL/",
+			OldName:  "tmp/folder/",
+			Err:      false,
+		},
+	}
+
+	for _, d := range data {
+		t.Run("test", func(t *testing.T) {
+			_, _ = postgres.SaveOwner(ctx, repoDTO.SaveOwnerDTO{
+				Identifier: d.Identifier,
+			})
+
+			for _, f := range d.files {
+				_, err := postgres.SaveFile(ctx, repoDTO.SaveFileReqDTO{
+					Identifier: d.Identifier,
+					File:       f,
+					Client:     d.ClientId,
+				})
+				if err != nil {
+				    t.Fatalf("Failed to save, error {%v}", err)
+				}
+			}
+
+			err := postgres.RenameFile(ctx, repoDTO.RenameFileReqDTO{
+				Identifier: repoDTO.Identifier{
+					Username: d.Username,
+					Folder:   d.Folder,
+				},
+				Client:  d.ClientId,
+				OldName: d.OldName,
+				NewName: d.NewName,
+			})
+
+			if err != nil {
+				if !d.Err {
+					t.Errorf("expected none, got error {%v} in create", err)
+				}
+			}
+		})
+	}
+}
+
+func TestDeleteFileAndRestoreFile(t *testing.T) {
+
+	truncate()
+	defer truncate()
+
+	data := []struct {
+		repoDTO.Identifier
+		files    []repoDTO.File
+		ClientId string
+		FileName  string
+		Err      bool
+	}{
+		{
+			Identifier: repoDTO.Identifier{
+				Username: "username",
+				Folder:   "1",
+			},
+			files: []repoDTO.File{
+				{
+					FileName: "folder/test.txt",
+					SizeFile: 1,
+					HashSum:  "1",
+					ModTime:  1,
+				},
+			},
+			ClientId: "1",
+			FileName:  "folder/test.txt",
+			Err:      false,
+		},
+		{
+			Identifier: repoDTO.Identifier{
+				Username: "username",
+				Folder:   "1",
+			},
+			files: []repoDTO.File{
+				{
+					FileName: "not/test.txt",
+					SizeFile: 2,
+					HashSum:  "2",
+					ModTime:  2,
+				},
+				{
+					FileName: "tmp/test1.abd",
+					SizeFile: 3,
+					HashSum:  "3",
+					ModTime:  3,
+				},
+				{
+					FileName: "tmp/var/.txt",
+					SizeFile: 4,
+					HashSum:  "4",
+					ModTime:  4,
+				},
+				{
+					FileName: "tmp/",
+					SizeFile: 0,
+					HashSum:  "",
+					ModTime:  4,
+				},
+			},
+			ClientId: "2",
+			FileName:  "tmp/",
+			Err:      false,
+		},
+		{
+			Identifier: repoDTO.Identifier{
+				Username: "username",
+				Folder:   "1",
+			},
+			files: []repoDTO.File{
+				{
+					FileName: "11not/test.txt",
+					SizeFile: 3,
+					HashSum:  "3",
+					ModTime:  3,
+				},
+				{
+					FileName: "tmp/folder/test1.abd",
+					SizeFile: 3,
+					HashSum:  "3",
+					ModTime:  3,
+				},
+				{
+					FileName: "tmp/folder/var/.txt",
+					SizeFile: 4,
+					HashSum:  "4",
+					ModTime:  4,
+				},
+			},
+			ClientId: "2",
+			FileName:  "tmp/folder/",
+			Err:      false,
+		},
+	}
+
+	for _, d := range data {
+		t.Run("test", func(t *testing.T) {
+			_, _ = postgres.SaveOwner(ctx, repoDTO.SaveOwnerDTO{
+				Identifier: d.Identifier,
+			})
+
+			for _, f := range d.files {
+				_, err := postgres.SaveFile(ctx, repoDTO.SaveFileReqDTO{
+					Identifier: d.Identifier,
+					File:       f,
+					Client:     d.ClientId,
+				})
+				if err != nil {
+				    t.Fatalf("Failed to save, error {%v}", err)
+				}
+			}
+
+			err := postgres.DeleteFile(ctx, repoDTO.DeleteFileReqDTO{
+				Identifier: repoDTO.Identifier{
+					Username: d.Username,
+					Folder:   d.Folder,
+				},
+				Client:  d.ClientId,
+				FileName: d.FileName,
+			})
+
+			if err != nil {
+				if !d.Err {
+					t.Errorf("expected none, got error {%v} in create", err)
+				}
+			}
+
+			err = postgres.RestoreFile(ctx, repoDTO.RestoreFileReqDTO{
+				Identifier: repoDTO.Identifier{
+					Username: d.Username,
+					Folder:   d.Folder,
+				},
+				Client:  d.ClientId,
+				FileName: d.FileName,
+			})
+
+			if err != nil {
+				if !d.Err {
+					t.Errorf("expected none, got error {%v} in create", err)
+				}
+			}
+		})
+	}
+}

@@ -3,10 +3,11 @@ package postgresql
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	repoDTO "github.com/gobox-preegnees/file_manager/internal/adapters/repo"
-	state "github.com/gobox-preegnees/file_manager/pkg/state"
 	usecase "github.com/gobox-preegnees/file_manager/internal/domain/usecase"
+	state "github.com/gobox-preegnees/file_manager/pkg/state"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -114,7 +115,7 @@ func (p *postgresql) SaveFile(ctx context.Context, saveFileReqDTO repoDTO.SaveFi
 			INSERT INTO 
 			files (client, file_name, mod_time, size_file, hash_sum, state, owner_id)
 			VALUES (
-				$1, $2, $3, $4, $5, $6
+				$1, $2, $3, $4, $5, $6,
 				(
 					SELECT owner_id
 					FROM owners
@@ -164,7 +165,7 @@ func (p *postgresql) SetState(ctx context.Context, setStateReqDTO repoDTO.SetSta
 			AND hash_sum=$4
 			AND mod_time=$5
 			AND size_file=$6
-			AND owner_name=(
+			AND owner_id=(
 							SELECT owner_id
 							FROM owners
 							WHERE removed=false
@@ -191,7 +192,7 @@ func (p *postgresql) RenameFile(ctx context.Context, renameFileReqDTO repoDTO.Re
 		`
 			UPDATE files
 			SET file_name=REPLACE(file_name, $1, $2), client=$3
-			WHERE file_name LIKE "$4%"
+			WHERE file_name LIKE $4
 				AND owner_id=(
 							SELECT owner_id
 							FROM owners
@@ -203,7 +204,7 @@ func (p *postgresql) RenameFile(ctx context.Context, renameFileReqDTO repoDTO.Re
 	_, err := p.conn.Exec(
 		ctx, sql,
 		renameFileReqDTO.OldName, renameFileReqDTO.NewName,
-		renameFileReqDTO.Client, renameFileReqDTO.OldName,
+		renameFileReqDTO.Client, fmt.Sprintf("%s%s%s", "", renameFileReqDTO.OldName, "%"),
 		renameFileReqDTO.Folder, renameFileReqDTO.Username,
 	)
 	return err
@@ -217,7 +218,7 @@ func (p *postgresql) DeleteFile(ctx context.Context, deleteFileReqDTO repoDTO.De
 		`
 			UPDATE files
 			SET removed=true, client=$1
-			WHERE file_name LIKE "$2%"
+			WHERE file_name LIKE $2
 				AND owner_id=(
 							SELECT owner_id
 							FROM owners
@@ -229,7 +230,7 @@ func (p *postgresql) DeleteFile(ctx context.Context, deleteFileReqDTO repoDTO.De
 			`
 	_, err := p.conn.Exec(
 		ctx, sql,
-		deleteFileReqDTO.Client, deleteFileReqDTO.FileName,
+		deleteFileReqDTO.Client, fmt.Sprintf("%s%s%s", "", deleteFileReqDTO.FileName, "%"),
 		deleteFileReqDTO.Folder, deleteFileReqDTO.Username,
 	)
 	return err
@@ -245,7 +246,7 @@ func (p *postgresql) RestoreFile(ctx context.Context, restoreFileReqDTO repoDTO.
 		`
 		UPDATE files
 		SET removed=false, client=$1
-		WHERE file_name LIKE "$2%"
+		WHERE file_name LIKE $2
 			AND owner_id=(
 						SELECT owner_id
 						FROM owners
@@ -257,7 +258,7 @@ func (p *postgresql) RestoreFile(ctx context.Context, restoreFileReqDTO repoDTO.
 		`
 	_, err := p.conn.Exec(
 		ctx, sql,
-		restoreFileReqDTO.Username, restoreFileReqDTO.FileName,
+		restoreFileReqDTO.Username, fmt.Sprintf("%s%s%s", "", restoreFileReqDTO.FileName, "%"),
 		restoreFileReqDTO.Folder, restoreFileReqDTO.Username,
 	)
 	return err
@@ -274,6 +275,7 @@ func (p *postgresql) FindAllFilesByOwner(ctx context.Context, findAllFilesByOwne
 		INNER JOIN files ON files.owner_id=owners.owner_id
 		WHERE owners.removed=false 
 		`
+	// TODO: add without ByOwner -> ..., search by any field
 	var err error
 	var rows pgx.Rows
 	if findAllFilesByOwnerReqDTO.OwnerId != 0 {

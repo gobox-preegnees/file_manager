@@ -38,7 +38,8 @@ type DeleteFileReqDTO struct {
 }
 type RestoreFileReqDTO struct {
 	Identifier
-	FileName string
+	Client string
+    FileName string
 }
 type FindAllOwnersByUsernameDTO struct {
 	Username string
