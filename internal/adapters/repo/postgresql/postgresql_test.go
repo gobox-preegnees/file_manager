@@ -32,7 +32,7 @@ func truncate() {
 	}
 }
 
-func TestCreateOwner(t *testing.T) {
+func TestSaveOwner(t *testing.T) {
 
 	truncate()
 
@@ -61,7 +61,7 @@ func TestCreateOwner(t *testing.T) {
 
 	for _, d := range data {
 		t.Run("test", func(t *testing.T) {
-			id, err := postgres.CreateOwner(ctx, d.Username, d.Folder)
+			id, err := postgres.SaveOwner(ctx, d.Username, d.Folder)
 			if d.Err {
 				if err == nil {
 					t.Errorf("expected error, got none")
@@ -92,7 +92,7 @@ func TestDeleteOwner(t *testing.T) {
 
 	for _, d := range data {
 		t.Run("test", func(t *testing.T) {
-			id, _ := postgres.CreateOwner(ctx, d.Username, d.Folder)
+			id, _ := postgres.SaveOwner(ctx, d.Username, d.Folder)
 			id_, err := postgres.DeleteOwner(ctx, id)
 			if d.Err {
 				if err != nil {
@@ -133,7 +133,7 @@ func TestUpdateOwner(t *testing.T) {
 
 	for _, d := range data {
 		t.Run("test", func(t *testing.T) {
-			id, _ := postgres.CreateOwner(ctx, d.Username, d.Folder)
+			id, _ := postgres.SaveOwner(ctx, d.Username, d.Folder)
 			id_, err := postgres.RenameOwner(ctx, id, d.NewFolder)
 			if d.Err {
 				if err != nil {

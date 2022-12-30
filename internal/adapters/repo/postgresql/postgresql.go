@@ -4,7 +4,8 @@ import (
 	"context"
 
 	repoDTO "github.com/gobox-preegnees/file_manager/internal/adapters/repo"
-	usecase "github.com/gobox-preegnees/file_manager/internal/domain/usecase"
+	// usecase "github.com/gobox-preegnees/file_manager/internal/domain/usecase"
+	state "github.com/gobox-preegnees/file_manager/pkg/state"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -97,205 +98,8 @@ func (p *postgresql) FindOneByPath(ctx context.Context, username string, folder 
 	return file, nil
 }
 
-func (p *postgresql) SaveOne(ctx context.Context, username, folder string, file repoDTO.FileDTO) error {
-
-	sql :=
-		`
-		INSERT INTO 
-		files (client,file_name,mod_time,size_file,hash_sum,folder_id)
-		VALUES (
-			$1,$2,$3,$4,$5,
-			(
-				SELECT folder_id
-				FROM folders
-				WHERE removed=false
-					AND folder=$6 
-					AND user_id=(
-								SELECT user_id 
-								FROM users
-								WHERE username=$7
-									AND removed=false
-								)
-			)
-		);
-		`
-	_, err := p.conn.Exec(ctx, sql,
-		file.Client, file.FileName, file.ModTime, file.SizeFile, file.HashSum, folder, username,
-	)
-	return err
-}
-
-func (p *postgresql) UpdateState(ctx context.Context, username, folder, client, fileName, hashSum, virtualName string, state int) error {
-
-	sql :=
-		`
-		UPDATE files 
-		SET state=$1, client=$2, virtual_name=$3
-		WHERE hash_sum=$4 
-			AND file_name=$5
-			AND folder_id=(
-						SELECT folder_id
-						FROM folders
-						WHERE removed=false
-							AND folder=$6
-							AND user_id=(
-										SELECT user_id
-										FROM users
-										WHERE username=$7
-											AND removed=false
-										)
-						)
-		`
-	_, err := p.conn.Exec(ctx, sql, state, client, virtualName, hashSum, fileName, folder, username)
-	return err
-}
-
-func (p *postgresql) UpdateFileName(ctx context.Context, username, folder, client, oldfileName, newfileName, hash string) error {
-	var err error
-	if hash == "" {
-		sql :=
-			`
-			UPDATE files
-			SET file_name=REPLACE(file_name, $1, $2), client=$3
-			WHERE folder_id=(
-							SELECT folder_id
-							FROM folders
-							WHERE removed=false
-								AND folder=$4
-								AND user_id=(
-											SELECT user_id
-											FROM users
-											WHERE username=$5
-												AND removed=false
-											)
-							)
-			`
-		_, err = p.conn.Exec(ctx, sql, oldfileName, newfileName, client, folder, username)
-	} else {
-		sql :=
-			`
-			UPDATE files
-			SET file_name=REPLACE(file_name, $1, $2), client=$3
-			WHERE hash_sum=$4
-				AND folder_id=(
-							SELECT folder_id
-							FROM folders
-							WHERE folder=$5
-								AND user_id=(
-											SELECT user_id
-											FROM users
-											WHERE username=$6
-											)
-							)
-			`
-		_, err = p.conn.Exec(ctx, sql, oldfileName, newfileName, client, hash, folder, username)
-	}
-	return err
-}
-
-func (p *postgresql) DeleteFile(ctx context.Context, username, folder, client, fileName, hash string) error {
-	var err error
-	if hash == "" {
-		sql :=
-			`
-		UPDATE files
-		SET removed=true, client=$1
-		WHERE file_name LIKE "$2%"
-			AND folder_id=(
-						SELECT folder_id
-						FROM folders
-						WHERE folder=$3
-							AND user_id=(
-										SELECT user_id
-										FROM users
-										WHERE username=$4
-										)
-						)
-		`
-		_, err = p.conn.Exec(ctx, sql, client, fileName, folder, username)
-	} else {
-		sql :=
-			`
-		UPDATE files
-		SET removed=true, client=$1
-		WHERE file_name LIKE "$2%"
-			AND hash_sum=$3
-			AND folder_id=(
-						SELECT folder_id
-						FROM folders
-						WHERE folder=$4
-							AND user_id=(
-										SELECT user_id
-										FROM users
-										WHERE username=$5
-										)
-						)
-		`
-		_, err = p.conn.Exec(ctx, sql, client, fileName, hash, folder, username)
-	}
-
-	return err
-}
-
-func (p *postgresql) CreateUser(ctx context.Context, username string) error {
-	sql :=
-		`
-		INSERT INTO users (username)
-		VALUES (
-			$1
-		)
-		`
-	_, err := p.conn.Exec(ctx, sql, username)
-	return err
-}
-
-func (p *postgresql) DeleteUser(ctx context.Context, username string) error {
-	sql :=
-		`
-		UPDATE users
-		SET removed=true
-		WHERE username=$1
-		`
-	_, err := p.conn.Exec(ctx, sql, username)
-	return err
-}
-
-func (p *postgresql) CreateFolder(ctx context.Context, username, folder string) error {
-	sql :=
-		`
-		INSERT INTO folders (folder, user_id)
-		VALUES (
-			$1,
-			(
-				SELECT user_id 
-				FROM users 
-				WHERE username=$2 
-					AND removed=false
-			)
-		)
-		`
-	_, err := p.conn.Exec(ctx, sql, folder, username)
-	return err
-}
-
-func (p *postgresql) DeleteFolder(ctx context.Context, username, folder string) error {
-	sql :=
-		`
-		UPDATE folders
-		SET removed=true
-		WHERE folder=$1
-			AND folder_id=(
-						SELECT user_id 
-						FROM users
-						WHERE username=$2
-						)
-		`
-	_, err := p.conn.Exec(ctx, sql, folder, username)
-	return err
-}
-
 // /////////////////////////////////////////////////////////////
-func (p *postgresql) CreateOwner(ctx context.Context, username, folder string) (int, error) {
+func (p *postgresql) SaveOwner(ctx context.Context, username, folder string) (int, error) {
 
 	sql :=
 		`
@@ -308,7 +112,7 @@ func (p *postgresql) CreateOwner(ctx context.Context, username, folder string) (
 	return id, err
 }
 
-func (p *postgresql) RenameOwner(ctx context.Context, ownerID int, newFolderName string) (int, error) {
+func (p *postgresql) RenameOwner(ctx context.Context, ownerID int, newFolderName string) error {
 
 	sql :=
 		`
@@ -317,23 +121,181 @@ func (p *postgresql) RenameOwner(ctx context.Context, ownerID int, newFolderName
 		WHERE owner_id=$2
 		RETURNING owner_id
 		`
-	var id int
-	err := p.conn.QueryRow(ctx, sql, newFolderName, ownerID).Scan(&id)
-	return id, err
+
+	_, err := p.conn.Exec(ctx, sql, newFolderName, ownerID)
+	return err
 }
 
-func (p *postgresql) DeleteOwner(ctx context.Context, ownerID int) (int, error) {
+func (p *postgresql) DeleteOwner(ctx context.Context, ownerID int) error {
 
 	sql :=
 		`
 		UPDATE owners
 		SET removed=true
 		WHERE owner_id=$1
-		RETURNING owner_id
 		`
+
+	_, err := p.conn.Exec(ctx, sql, ownerID)
+	return err
+}
+
+func (p *postgresql) RestoreOwner(ctx context.Context, ownerID string) error {
+
+	sql :=
+		`
+		UPDATE owners
+		SET removed=false
+		WHERE owner_id=$1
+		`
+	_, err := p.conn.Exec(ctx, sql, ownerID)
+	return err
+}
+
+func (p *postgresql) SaveFile(ctx context.Context, saveFileReqDTO repoDTO.SaveFileReqDTO) (int, error) {
+
+	saveFile := func(state int) (int, error) {
+		sql :=
+			`
+		INSERT INTO 
+		files (client, file_name, mod_time, size_file, hash_sum, state, owner_id)
+		VALUES (
+			$1, $2, $3, $4, $5, $6
+			(
+				SELECT owner_id
+				FROM owners
+				WHERE removed=false
+					AND folder=$7 
+					AND username=$8
+			)
+		)
+		RETURNING file_id
+        `
+
+		var id int
+		err := p.conn.QueryRow(
+			ctx, sql,
+			saveFileReqDTO.Client, saveFileReqDTO.FileName,
+			saveFileReqDTO.ModTime, saveFileReqDTO.SizeFile,
+			saveFileReqDTO.HashSum, state,
+			saveFileReqDTO.Folder, saveFileReqDTO.Username,
+		).Scan(&id)
+		return id, err
+	}
+
+	var err error
 	var id int
-	err := p.conn.QueryRow(ctx, sql, ownerID).Scan(&id)
+	if saveFileReqDTO.HashSum == "" {
+		id, err = saveFile(state.Folder)
+	} else {
+		id, err = saveFile(state.Created)
+	}
 	return id, err
 }
 
-var _ usecase.FileRepo = (*postgresql)(nil)
+func (p *postgresql) SetState(ctx context.Context, setStateReqDTO repoDTO.SetStateReqDTO) error {
+
+	sql :=
+		`
+        UPDATE files
+        SET state=$1, virtual_name=$2
+        WHERE file_name=$3
+			AND hash_sum=$4
+			AND mod_time=$5
+			AND size_file=$6
+			AND owner_name=(
+							SELECT owner_id
+							FROM owners
+							WHERE removed=false
+								AND folder=$7
+								AND username=$8
+							)
+        `
+
+	_, err := p.conn.Exec(
+		ctx, sql,
+		setStateReqDTO.State, setStateReqDTO.VirtualName,
+		setStateReqDTO.FileName, setStateReqDTO.HashSum,
+		setStateReqDTO.ModTime, setStateReqDTO.SizeFile,
+		setStateReqDTO.Folder, setStateReqDTO.Username,
+	)
+	return err
+}
+
+func (p *postgresql) RenameFile(ctx context.Context, renameFileReqDTO repoDTO.RenameFileReqDTO) error {
+
+	sql :=
+		`
+			UPDATE files
+			SET file_name=REPLACE(file_name, $1, $2), client=$3
+			WHERE file_name LIKE "$4%"
+				AND owner_id=(
+							SELECT owner_id
+							FROM owners
+							WHERE removed=false
+								AND folder=$5
+								AND username=$6
+							)
+			`
+	_, err := p.conn.Exec(
+		ctx, sql,
+		renameFileReqDTO.OldName, renameFileReqDTO.NewName,
+		renameFileReqDTO.Client, renameFileReqDTO.OldName,
+		renameFileReqDTO.Folder, renameFileReqDTO.Username,
+	)
+	return err
+}
+
+func (p *postgresql) DeleteFile(ctx context.Context, deleteFileReqDTO repoDTO.DeleteFileReqDTO) error {
+
+	sql :=
+		`
+			UPDATE files
+			SET removed=true, client=$1
+			WHERE file_name LIKE "$2%"
+				AND owner_id=(
+							SELECT owner_id
+							FROM owners
+							WHERE removed=false
+								AND folder=$3
+								AND username=$4
+							)
+			RETURNING file_id
+			`
+	_, err := p.conn.Exec(
+		ctx, sql,
+		deleteFileReqDTO.Client, deleteFileReqDTO.FileName,
+		deleteFileReqDTO.Folder, deleteFileReqDTO.Username,
+	)
+
+	return err
+}
+
+// RestoreFile. Restoring one file if it has a hash,
+// or restores many files and folders if there is no
+// hash (the folder does not have a hash, the folder contains files).
+// You can restore only through your personal account (Web).
+func (p *postgresql) RestoreFile(ctx context.Context, restoreFileReqDTO repoDTO.RestoreFileReqDTO) error {
+
+	sql :=
+		`
+			UPDATE files
+			SET removed=false, client=$1
+			WHERE file_name LIKE "$2%"
+				AND owner_id=(
+							SELECT owner_id
+							FROM owners
+							WHERE removed=false
+								AND folder=$3
+								AND username=$4
+							)
+			RETURNING file_id
+			`
+	_, err := p.conn.Exec(
+		ctx, sql,
+		restoreFileReqDTO.Username, restoreFileReqDTO.FileName,
+		restoreFileReqDTO.Folder, restoreFileReqDTO.Username,
+	)
+	return err
+}
+
+// var _ usecase.FileRepo = (*postgresql)(nil)
