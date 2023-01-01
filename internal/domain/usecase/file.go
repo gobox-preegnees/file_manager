@@ -18,7 +18,7 @@ type FileRepo interface {
 	RenameFile(ctx context.Context, renameFileReqDTO repoDTO.RenameFileReqDTO) error
 	DeleteFile(ctx context.Context, deleteFileReqDTO repoDTO.DeleteFileReqDTO) error
 	RestoreFile(ctx context.Context, restoreFileReqDTO repoDTO.RestoreFileReqDTO) error
-	FindAllFilesByOwner(ctx context.Context, findAllFilesByOwnerReqDTO repoDTO.FindAllFilesByOwnerReqDTO) (repoDTO.FindAllFilesByOwnerRespDTO, error)
+	FindAllFilesByOwnerOrFileId(ctx context.Context, findAllFilesByOwnerReqDTO repoDTO.FindAllFilesByOwnerOrFileIdReqDTO) (repoDTO.FindAllFilesByOwnerOrFileIdRespDTO, error)
 }
 
 type fileUsecase struct {

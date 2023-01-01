@@ -44,8 +44,9 @@ type RestoreFileReqDTO struct {
 type FindAllOwnersByUsernameDTO struct {
 	Username string
 }
-type FindAllFilesByOwnerReqDTO struct {
+type FindAllFilesByOwnerOrFileIdReqDTO struct {
 	Owner
+	FileId int
 }
 type FullFile struct {
 	Owner
@@ -56,7 +57,7 @@ type FullFile struct {
 	State       int
 	Client      string
 }
-type FindAllFilesByOwnerRespDTO struct {
+type FindAllFilesByOwnerOrFileIdRespDTO struct {
 	Files []FullFile
 }
 type SaveOwnerDTO struct {

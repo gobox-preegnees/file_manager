@@ -507,7 +507,7 @@ func TestRenameFile(t *testing.T) {
 					Client:     d.ClientId,
 				})
 				if err != nil {
-				    t.Fatalf("Failed to save, error {%v}", err)
+					t.Fatalf("Failed to save, error {%v}", err)
 				}
 			}
 
@@ -539,7 +539,7 @@ func TestDeleteFileAndRestoreFile(t *testing.T) {
 		repoDTO.Identifier
 		files    []repoDTO.File
 		ClientId string
-		FileName  string
+		FileName string
 		Err      bool
 	}{
 		{
@@ -556,7 +556,7 @@ func TestDeleteFileAndRestoreFile(t *testing.T) {
 				},
 			},
 			ClientId: "1",
-			FileName:  "folder/test.txt",
+			FileName: "folder/test.txt",
 			Err:      false,
 		},
 		{
@@ -591,7 +591,7 @@ func TestDeleteFileAndRestoreFile(t *testing.T) {
 				},
 			},
 			ClientId: "2",
-			FileName:  "tmp/",
+			FileName: "tmp/",
 			Err:      false,
 		},
 		{
@@ -620,7 +620,7 @@ func TestDeleteFileAndRestoreFile(t *testing.T) {
 				},
 			},
 			ClientId: "2",
-			FileName:  "tmp/folder/",
+			FileName: "tmp/folder/",
 			Err:      false,
 		},
 	}
@@ -638,7 +638,7 @@ func TestDeleteFileAndRestoreFile(t *testing.T) {
 					Client:     d.ClientId,
 				})
 				if err != nil {
-				    t.Fatalf("Failed to save, error {%v}", err)
+					t.Fatalf("Failed to save file, error {%v}", err)
 				}
 			}
 
@@ -647,7 +647,7 @@ func TestDeleteFileAndRestoreFile(t *testing.T) {
 					Username: d.Username,
 					Folder:   d.Folder,
 				},
-				Client:  d.ClientId,
+				Client:   d.ClientId,
 				FileName: d.FileName,
 			})
 
@@ -662,7 +662,7 @@ func TestDeleteFileAndRestoreFile(t *testing.T) {
 					Username: d.Username,
 					Folder:   d.Folder,
 				},
-				Client:  d.ClientId,
+				Client:   d.ClientId,
 				FileName: d.FileName,
 			})
 
@@ -670,6 +670,168 @@ func TestDeleteFileAndRestoreFile(t *testing.T) {
 				if !d.Err {
 					t.Errorf("expected none, got error {%v} in create", err)
 				}
+			}
+		})
+	}
+}
+
+func TestFindAllFilesByOwner(t *testing.T) {
+
+	truncate()
+	defer truncate()
+
+	data := []struct {
+		Identifier          repoDTO.Identifier
+		files               []repoDTO.File
+		Client              string
+		ByOwnerId           bool
+		ByFileId            bool
+		ByUsernameAndFolder bool
+		Err                 bool
+		Count               int
+	}{
+		{
+			files: []repoDTO.File{
+				{
+					FileName: "11not/test.txt",
+					SizeFile: 3,
+					HashSum:  "3",
+					ModTime:  3,
+				},
+				{
+					FileName: "tmp/folder/test1.abd",
+					SizeFile: 4,
+					HashSum:  "4",
+					ModTime:  4,
+				},
+				{
+					FileName: "tmp/folder/var/.txt",
+					SizeFile: 5,
+					HashSum:  "5",
+					ModTime:  5,
+				},
+			},
+			Identifier: repoDTO.Identifier{
+				Username: "username",
+				Folder:   "folder",
+			},
+			Client:              "1",
+			Count:               3,
+			ByOwnerId:           false,
+			ByFileId:            false,
+			ByUsernameAndFolder: true,
+			Err:                 false,
+		},
+		{
+			files: []repoDTO.File{
+				{
+					FileName: "vyub67u67/test.txt",
+					SizeFile: 30,
+					HashSum:  "30",
+					ModTime:  30,
+				},
+				{
+					FileName: "tmp/7u67/test1.abd",
+					SizeFile: 40,
+					HashSum:  "40",
+					ModTime:  40,
+				},
+				{
+					FileName: "tmp/folder/o9p0/.txt",
+					SizeFile: 50,
+					HashSum:  "50",
+					ModTime:  50,
+				},
+			},
+			Identifier: repoDTO.Identifier{
+				Username: "username",
+				Folder:   "folder",
+			},
+			Client:              "1",
+			Count:               6,
+			ByOwnerId:           true,
+			ByFileId:            false,
+			ByUsernameAndFolder: false,
+			Err:                 false,
+		},
+		{
+			files: []repoDTO.File{
+				{
+					FileName: "abcdef",
+					SizeFile: 6,
+					HashSum:  "6",
+					ModTime:  6,
+				},
+				{
+					FileName: "adergrbu",
+					SizeFile: 7,
+					HashSum:  "7",
+					ModTime:  7,
+				},
+			},
+			Identifier: repoDTO.Identifier{
+				Username: "username",
+				Folder:   "folder",
+			},
+			Client: "2",
+			Count:  1,
+			ByOwnerId:           false,
+			ByFileId:            true,
+			ByUsernameAndFolder: false,
+			Err:    false,
+		},
+	}
+
+	ownerID, err := postgres.SaveOwner(ctx, repoDTO.SaveOwnerDTO{
+		Identifier: data[0].Identifier,
+	})
+	if err!= nil {
+		t.Fatalf("expected no error, got error {%v} in save owner", err)
+	}
+
+	for _, d := range data {
+		t.Run("test", func(t *testing.T) {
+			var fileIDs = make([]int, 0)
+			for _, f := range d.files {
+				fileID, err := postgres.SaveFile(ctx, repoDTO.SaveFileReqDTO{
+					Identifier: d.Identifier,
+					File:       f,
+					Client:     d.Client,
+				})
+				if err != nil {
+					t.Fatalf("Failed to save, error {%v}", err)
+				}
+				fileIDs = append(fileIDs, fileID)
+			}
+
+			var err error
+			var files repoDTO.FindAllFilesByOwnerOrFileIdRespDTO
+
+			if d.ByOwnerId {
+                files, err = postgres.FindAllFilesByOwnerOrFileId(ctx, repoDTO.FindAllFilesByOwnerOrFileIdReqDTO{
+                    Owner: repoDTO.Owner{
+						OwnerId: ownerID,
+					},
+                })
+			} else if d.ByUsernameAndFolder {
+				files, err = postgres.FindAllFilesByOwnerOrFileId(ctx, repoDTO.FindAllFilesByOwnerOrFileIdReqDTO{
+					Owner: repoDTO.Owner{
+						Identifier: d.Identifier,
+					},
+                })
+			} else if d.ByFileId {
+				files, err = postgres.FindAllFilesByOwnerOrFileId(ctx, repoDTO.FindAllFilesByOwnerOrFileIdReqDTO{
+					FileId: fileIDs[0],
+                })
+			}
+
+			if err != nil {
+				if !d.Err {
+					t.Errorf("expected none, got error {%v} in findAllFilesByOwner", err)
+				}
+			}
+			if len(files.Files) != d.Count {
+				t.Errorf("expected count {%v}, got {%v}", d.Count, len(files.Files))
 			}
 		})
 	}

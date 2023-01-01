@@ -1,6 +1,5 @@
 CREATE TABLE IF NOT EXISTS owners (
     owner_id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    removed BOOLEAN NOT NULL DEFAULT false,
     username TEXT NOT NULL,
     folder TEXT NOT NULL,
     UNIQUE (username, folder)
@@ -18,5 +17,5 @@ CREATE TABLE IF NOT EXISTS files (
     mod_time INT NOT NULL,
     client TEXT NOT NULL,
     UNIQUE (file_name, owner_id),
-    FOREIGN KEY (owner_id) REFERENCES owners (owner_id)
+    FOREIGN KEY (owner_id) REFERENCES owners (owner_id) ON DELETE CASCADE
 );
