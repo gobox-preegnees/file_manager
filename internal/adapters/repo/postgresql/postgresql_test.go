@@ -12,7 +12,7 @@ import (
 var postgres *postgresql
 var ctx context.Context = context.Background()
 
-const url string = "postgres://postgres:postgres@localhost:5431/postgres?sslmode=disable"
+const url string = "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable"
 
 func TestMain(m *testing.M) {
 

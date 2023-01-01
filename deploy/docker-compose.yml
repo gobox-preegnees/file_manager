@@ -20,7 +20,7 @@ services:
       retries: 5
       start_period: 1s
     ports:
-      - "5431:5432"
+      - "5432:5432"
     # volumes:
     #   - ./data:/var/lib/postgresql/data
   migrate:
@@ -39,17 +39,17 @@ services:
       ZOOKEEPER_TICK_TIME: 2000
     ports:
       - 22181:2181
-    volumes:
-      - ./klog/zookeeper/data:/var/lib/zookeeper/data
-      - ./klog/zookeeper/log:/var/lib/zookeeper/log
+    # volumes:
+    #   - ./klog/zookeeper/data:/var/lib/zookeeper/data
+    #   - ./klog/zookeeper/log:/var/lib/zookeeper/log
   kafka:
     image: confluentinc/cp-kafka:7.3.0
     depends_on:
       - zookeeper
     ports:
       - 29092:29092
-    volumes: 
-      - ./klog/kafka/data:/var/lib/kafka/data
+    # volumes: 
+    #   - ./klog/kafka/data:/var/lib/kafka/data
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
