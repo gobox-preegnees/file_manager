@@ -3,9 +3,11 @@ package grpc
 import (
 	"context"
 
-	pb "github.com/gobox-preegnees/file_manager/api/contract"
+	pb "github.com/gobox-preegnees/file_manager/api/grpc"
 	"github.com/gobox-preegnees/file_manager/internal/domain/entity"
 )
+
+// TODO: перенести в файл server.go
 
 const CODE_OK = 100
 

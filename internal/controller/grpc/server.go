@@ -4,7 +4,7 @@ import (
 	"context"
 	"net"
 
-	pb "github.com/gobox-preegnees/file_manager/api/contract"
+	pb "github.com/gobox-preegnees/file_manager/api/grpc"
 	entity "github.com/gobox-preegnees/file_manager/internal/domain/entity"
 
 	"github.com/sirupsen/logrus"

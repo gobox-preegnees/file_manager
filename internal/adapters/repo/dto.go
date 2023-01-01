@@ -21,7 +21,7 @@ type SaveFileReqDTO struct {
 }
 type SetStateReqDTO struct {
 	Identifier
-	File
+	FileName string
 	VirtualName string
 	State       int
 }

@@ -161,23 +161,19 @@ func (p *postgresql) SetState(ctx context.Context, setStateReqDTO repoDTO.SetSta
         UPDATE files
         SET state=$1, virtual_name=$2
         WHERE file_name=$3
-			AND hash_sum=$4
-			AND mod_time=$5
-			AND size_file=$6
 			AND owner_id=(
 							SELECT owner_id
 							FROM owners
-							WHERE folder=$7
-								AND username=$8
+							WHERE folder=$4
+								AND username=$5
 							)
         `
 
 	_, err := p.conn.Exec(
 		ctx, sql,
 		setStateReqDTO.State, setStateReqDTO.VirtualName,
-		setStateReqDTO.FileName, setStateReqDTO.HashSum,
-		setStateReqDTO.ModTime, setStateReqDTO.SizeFile,
-		setStateReqDTO.Folder, setStateReqDTO.Username,
+		setStateReqDTO.FileName, setStateReqDTO.Folder, 
+		setStateReqDTO.Username,
 	)
 	return err
 }

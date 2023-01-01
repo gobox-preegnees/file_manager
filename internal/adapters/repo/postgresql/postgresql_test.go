@@ -381,7 +381,7 @@ func TestSetState(t *testing.T) {
 					Username: d.Username,
 					Folder:   d.Folder,
 				},
-				File:        d.File,
+				FileName:    d.File.FileName,
 				VirtualName: d.VirtualName,
 				State:       d.State,
 			})
@@ -773,19 +773,19 @@ func TestFindAllFilesByOwner(t *testing.T) {
 				Username: "username",
 				Folder:   "folder",
 			},
-			Client: "2",
-			Count:  1,
+			Client:              "2",
+			Count:               1,
 			ByOwnerId:           false,
 			ByFileId:            true,
 			ByUsernameAndFolder: false,
-			Err:    false,
+			Err:                 false,
 		},
 	}
 
 	ownerID, err := postgres.SaveOwner(ctx, repoDTO.SaveOwnerDTO{
 		Identifier: data[0].Identifier,
 	})
-	if err!= nil {
+	if err != nil {
 		t.Fatalf("expected no error, got error {%v} in save owner", err)
 	}
 
@@ -808,21 +808,21 @@ func TestFindAllFilesByOwner(t *testing.T) {
 			var files repoDTO.FindAllFilesByOwnerOrFileIdRespDTO
 
 			if d.ByOwnerId {
-                files, err = postgres.FindAllFilesByOwnerOrFileId(ctx, repoDTO.FindAllFilesByOwnerOrFileIdReqDTO{
-                    Owner: repoDTO.Owner{
+				files, err = postgres.FindAllFilesByOwnerOrFileId(ctx, repoDTO.FindAllFilesByOwnerOrFileIdReqDTO{
+					Owner: repoDTO.Owner{
 						OwnerId: ownerID,
 					},
-                })
+				})
 			} else if d.ByUsernameAndFolder {
 				files, err = postgres.FindAllFilesByOwnerOrFileId(ctx, repoDTO.FindAllFilesByOwnerOrFileIdReqDTO{
 					Owner: repoDTO.Owner{
 						Identifier: d.Identifier,
 					},
-                })
+				})
 			} else if d.ByFileId {
 				files, err = postgres.FindAllFilesByOwnerOrFileId(ctx, repoDTO.FindAllFilesByOwnerOrFileIdReqDTO{
 					FileId: fileIDs[0],
-                })
+				})
 			}
 
 			if err != nil {

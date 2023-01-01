@@ -1,0 +1,7 @@
+# This data needs to be sent as a json to change the state of the uploaded file 
+
+username: !!str "" # username of client, on registration
+folder: !!str "" # virtual folder which person has created in Personal Area 
+file_name: !!str "" # real name of file which is uploading to server 
+virtual_name: !!str "" # virtual name of file which is created on uploading automatically
+state: !!int 100 # 100-created, 200-uploading, 300-uploaded, 400-error
