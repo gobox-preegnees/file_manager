@@ -6,6 +6,7 @@ import (
 	daoDTO "github.com/gobox-preegnees/file_manager/internal/adapters/dao"
 	grpcController "github.com/gobox-preegnees/file_manager/internal/controller/grpc"
 	entity "github.com/gobox-preegnees/file_manager/internal/domain/entity"
+	"github.com/sirupsen/logrus"
 )
 
 //go:generate mockgen -destination=../../mocks/domain/usecase/dao/file/file.go -package=usecase_dao_file -source=file.go
@@ -17,12 +18,14 @@ type IDaoFile interface {
 }
 
 type fileUsecase struct {
+	log      *logrus.Logger
 	fileRepo IDaoFile
 }
 
-func NewFileUsecase(fileRepo IDaoFile) fileUsecase {
+func NewFileUsecase(log *logrus.Logger, fileRepo IDaoFile) *fileUsecase {
 
-	return fileUsecase{
+	return &fileUsecase{
+		log:      log,
 		fileRepo: fileRepo,
 	}
 }

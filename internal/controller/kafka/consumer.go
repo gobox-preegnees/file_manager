@@ -37,17 +37,17 @@ type ConsumerCnf struct {
 	Ctx          context.Context
 	Log          *logrus.Logger
 	Topic        string
-	Addresses    []string
+	Addrs    []string
 	GroupId      string
 	Partition    int
 	StateUsecase IStateUsecase
 }
 
 // New. Create new consumer instance
-func New(cnf ConsumerCnf) *consumer {
+func NewConsumer(cnf ConsumerCnf) *consumer {
 
 	reader := kafka.NewReader(kafka.ReaderConfig{
-		Brokers:  cnf.Addresses,
+		Brokers:  cnf.Addrs,
 		GroupID:  cnf.GroupId,
 		Topic:    cnf.Topic,
 		Logger:   cnf.Log,

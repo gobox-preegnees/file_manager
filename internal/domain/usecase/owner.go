@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	entity "github.com/gobox-preegnees/file_manager/internal/domain/entity"
 	daoDTO "github.com/gobox-preegnees/file_manager/internal/adapters/dao"
+	entity "github.com/gobox-preegnees/file_manager/internal/domain/entity"
 
 	"github.com/sirupsen/logrus"
 )
@@ -22,17 +22,17 @@ type IServiceOwner interface {
 }
 
 type ownerUsecase struct {
-	log      *logrus.Logger
-	dao IDaoOwner
-	service  IServiceState
+	log     *logrus.Logger
+	dao     IDaoOwner
+	service IServiceState
 }
 
 func NewOwnerUsecase(log *logrus.Logger, dao IDaoOwner, service IServiceOwner) *ownerUsecase {
 
 	return &ownerUsecase{
-		log:      log,
-		dao: dao,
-		service:  service,
+		log:     log,
+		dao:     dao,
+		service: service,
 	}
 }
 

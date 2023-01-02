@@ -16,7 +16,7 @@ const url string = "postgres://postgres:postgres@localhost:5432/postgres?sslmode
 func TestMain(m *testing.M) {
 
 	var err error
-	postgres, err = New(ctx, url)
+	postgres, err = NewPosgresql(ctx, url)
 	if err != nil {
 		panic(err)
 	}

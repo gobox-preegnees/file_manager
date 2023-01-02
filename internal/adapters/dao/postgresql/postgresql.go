@@ -22,7 +22,7 @@ type postgresql struct {
 }
 
 // New. Create a new Postgres
-func New(ctx context.Context, url string) (*postgresql, error) {
+func NewPosgresql(ctx context.Context, url string) (*postgresql, error) {
 
 	conn, err := pgx.Connect(ctx, url)
 	if err != nil {

@@ -58,11 +58,11 @@ func TestValidateModel(t *testing.T) {
 		},
 	}
 
-	kafka := New(ConsumerCnf{
+	kafka := NewConsumer(ConsumerCnf{
 		Ctx:          context.TODO(),
 		Log:          getLogger(),
 		Topic:        "topic",
-		Addresses:    []string{"localhost:29092"},
+		Addrs:        []string{"localhost:29092"},
 		GroupId:      "id",
 		Partition:    0,
 		StateUsecase: nil,
@@ -146,12 +146,12 @@ func TestConsumerWork(t *testing.T) {
 		Ctx:          ctx,
 		Log:          getLogger(),
 		Topic:        topic,
-		Addresses:    []string{addr[0]},
+		Addrs:        []string{addr[0]},
 		GroupId:      groupId,
 		Partition:    partition,
 		StateUsecase: mockConsumer,
 	}
-	kafka := New(cnf)
+	kafka := NewConsumer(cnf)
 	err := kafka.Run()
 	if err != nil {
 		t.Fatal(err)

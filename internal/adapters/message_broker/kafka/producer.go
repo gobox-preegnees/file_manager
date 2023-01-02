@@ -43,7 +43,6 @@ func (p *producer) PublishErr(publishErrReqDTO mbDTO.PublishErrReqDTO) error {
 		defer cancel()
 
 		err := p.writer.WriteMessages(ctx, kafka.Message{
-			Topic: "errors",
 			Value: publishErrReqDTO.Error,
 		})
 		if errors.Is(err, kafka.LeaderNotAvailable) || errors.Is(err, context.DeadlineExceeded) {
