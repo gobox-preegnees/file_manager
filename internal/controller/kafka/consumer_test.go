@@ -10,10 +10,10 @@ import (
 	"time"
 
 	"github.com/gobox-preegnees/file_manager/internal/domain/entity"
-	mockCons "github.com/gobox-preegnees/file_manager/internal/mocks/kafka/consumer"
+	mockCons "github.com/gobox-preegnees/file_manager/internal/mocks/kafka/consumer/state"
 
 	"github.com/golang/mock/gomock"
-	kafkaGo "github.com/segmentio/kafka-go"
+	"github.com/segmentio/kafka-go"
 	"github.com/sirupsen/logrus"
 )
 
@@ -58,14 +58,14 @@ func TestValidateModel(t *testing.T) {
 		},
 	}
 
-	kafka := New(KafkaConsumerCnf{
-		Ctx:       context.TODO(),
-		Log:       getLogger(),
-		Topic:     "topic",
-		Addresses: []string{"localhost:29092"},
-		GroupId:   "id",
-		Partition: 0,
-		Usecase:   nil,
+	kafka := New(ConsumerCnf{
+		Ctx:          context.TODO(),
+		Log:          getLogger(),
+		Topic:        "topic",
+		Addresses:    []string{"localhost:29092"},
+		GroupId:      "id",
+		Partition:    0,
+		StateUsecase: nil,
 	})
 
 	for _, d := range data {
@@ -99,35 +99,35 @@ func TestConsumerWork(t *testing.T) {
 
 	states := []entity.State{
 		{
-			Username: "1",
-			Folder: "1",
-			FileName: "1",
+			Username:    "1",
+			Folder:      "1",
+			FileName:    "1",
 			VirtualName: "1",
-			FileSize: 1,
-			State: 200,
+			FileSize:    1,
+			State:       200,
 		},
 		{
-			Username: "2",
-			Folder: "2",
-			FileName: "2",
+			Username:    "2",
+			Folder:      "2",
+			FileName:    "2",
 			VirtualName: "2",
-			FileSize: 2,
-			State: 200,
+			FileSize:    2,
+			State:       200,
 		},
 		{
-			Username: "3",
-			Folder: "3",
-			FileName: "3",
+			Username:    "3",
+			Folder:      "3",
+			FileName:    "3",
 			VirtualName: "3",
-			FileSize: 3,
-			State: 200,
+			FileSize:    3,
+			State:       200,
 		},
 	}
 
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-	mockConsumer := mockCons.NewMockIUsecase(mockCtrl)
-	mockConsumer.EXPECT().SetState(gomock.Any()).AnyTimes()
+	mockConsumer := mockCons.NewMockIStateUsecase(mockCtrl)
+	mockConsumer.EXPECT().SetState(gomock.Any(), gomock.Any()).AnyTimes()
 
 	go func() {
 		defer cancel()
@@ -141,15 +141,15 @@ func TestConsumerWork(t *testing.T) {
 			}
 		}
 	}()
-	
-	cnf := KafkaConsumerCnf{
-		Ctx:       ctx,
-		Log:       getLogger(),
-		Topic:     topic,
-		Addresses: []string{addr[0]},
-		GroupId:   groupId,
-		Partition: partition,
-		Usecase:   mockConsumer,
+
+	cnf := ConsumerCnf{
+		Ctx:          ctx,
+		Log:          getLogger(),
+		Topic:        topic,
+		Addresses:    []string{addr[0]},
+		GroupId:      groupId,
+		Partition:    partition,
+		StateUsecase: mockConsumer,
 	}
 	kafka := New(cnf)
 	err := kafka.Run()
@@ -159,10 +159,10 @@ func TestConsumerWork(t *testing.T) {
 }
 
 func clear(addrs []string, topic string) {
-	
-	conn, err := kafkaGo.Dial("tcp", addrs[0])
+
+	conn, err := kafka.Dial("tcp", addrs[0])
 	controller, err := conn.Controller()
-	controllerConn, err := kafkaGo.Dial("tcp", net.JoinHostPort(controller.Host, strconv.Itoa(controller.Port)))
+	controllerConn, err := kafka.Dial("tcp", net.JoinHostPort(controller.Host, strconv.Itoa(controller.Port)))
 	controllerConn.DeleteTopics(topic)
 	if err != nil {
 		panic(err)
@@ -174,13 +174,13 @@ func clear(addrs []string, topic string) {
 
 func produce(t *testing.T, addrs []string, topic string, message []byte) error {
 
-	w := &kafkaGo.Writer{
-		Addr:                   kafkaGo.TCP(addrs...),
+	w := &kafka.Writer{
+		Addr:                   kafka.TCP(addrs...),
 		Topic:                  topic,
 		AllowAutoTopicCreation: true,
 	}
 
-	messages := []kafkaGo.Message{
+	messages := []kafka.Message{
 		{
 			Value: message,
 		},
@@ -192,7 +192,7 @@ func produce(t *testing.T, addrs []string, topic string, message []byte) error {
 		defer cancel()
 
 		err := w.WriteMessages(ctx, messages...)
-		if errors.Is(err, kafkaGo.LeaderNotAvailable) || errors.Is(err, context.DeadlineExceeded) {
+		if errors.Is(err, kafka.LeaderNotAvailable) || errors.Is(err, context.DeadlineExceeded) {
 			time.Sleep(time.Millisecond * 250)
 			continue
 		}
@@ -209,7 +209,7 @@ func produce(t *testing.T, addrs []string, topic string, message []byte) error {
 }
 
 func getLogger() *logrus.Logger {
-	
+
 	logger := logrus.StandardLogger()
 	logger.SetLevel(logrus.DebugLevel)
 	logger.SetReportCaller(true)

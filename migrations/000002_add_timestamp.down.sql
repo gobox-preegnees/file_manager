@@ -1,1 +1,0 @@
--- https://x-team.com/blog/automatic-timestamps-with-postgresql/

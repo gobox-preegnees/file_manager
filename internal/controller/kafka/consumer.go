@@ -6,16 +6,16 @@ import (
 	"errors"
 	"fmt"
 
-	entity "github.com/gobox-preegnees/file_manager/internal/domain/entity"
+	"github.com/gobox-preegnees/file_manager/internal/domain/entity"
 
 	"github.com/go-playground/validator/v10"
-	kafkaGo "github.com/segmentio/kafka-go"
+	"github.com/segmentio/kafka-go"
 	"github.com/sirupsen/logrus"
 )
 
-//go:generate mockgen -destination=../../mocks/kafka/consumer/usecase.go -package=mock -source=consumer.go
-type IUsecase interface {
-	SetState(entity.State)
+//go:generate mockgen -destination=../../mocks/kafka/consumer/state/usecase.go -package=kafka -source=consumer.go
+type IStateUsecase interface {
+	SetState(context.Context, entity.State)
 }
 
 var (
@@ -25,28 +25,28 @@ var (
 )
 
 // kafka.
-type kafka struct {
-	ctx     context.Context
-	log     *logrus.Logger
-	reader  *kafkaGo.Reader
-	usecase IUsecase
+type consumer struct {
+	ctx          context.Context
+	log          *logrus.Logger
+	reader       *kafka.Reader
+	stateUsecase IStateUsecase
 }
 
 // KafkaCnf. Config for consumer
-type KafkaConsumerCnf struct {
-	Ctx       context.Context
-	Log       *logrus.Logger
-	Topic     string
-	Addresses []string
-	GroupId   string
-	Partition int
-	Usecase   IUsecase
+type ConsumerCnf struct {
+	Ctx          context.Context
+	Log          *logrus.Logger
+	Topic        string
+	Addresses    []string
+	GroupId      string
+	Partition    int
+	StateUsecase IStateUsecase
 }
 
 // New. Create new consumer instance
-func New(cnf KafkaConsumerCnf) *kafka {
+func New(cnf ConsumerCnf) *consumer {
 
-	reader := kafkaGo.NewReader(kafkaGo.ReaderConfig{
+	reader := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:  cnf.Addresses,
 		GroupID:  cnf.GroupId,
 		Topic:    cnf.Topic,
@@ -58,17 +58,17 @@ func New(cnf KafkaConsumerCnf) *kafka {
 		panic("Reader is nil")
 	}
 
-	return &kafka{
-		ctx:     cnf.Ctx,
-		log:     cnf.Log,
-		reader:  reader,
-		usecase: cnf.Usecase,
+	return &consumer{
+		ctx:          cnf.Ctx,
+		log:          cnf.Log,
+		reader:       reader,
+		stateUsecase: cnf.StateUsecase,
 	}
 }
 
 // Run. Run consuming message.
 // Returning: err when reader is not reading | err when validation | err when set state
-func (k *kafka) Run() error {
+func (k *consumer) Run() error {
 
 	defer k.reader.Close()
 
@@ -87,13 +87,13 @@ func (k *kafka) Run() error {
 		}
 		k.log.Debugf("state: %v", state)
 
-		k.usecase.SetState(state)
+		k.stateUsecase.SetState(context.Background(), state)
 		k.log.Debugf("success set state: %v", state)
 	}
 }
 
 // validateMessage. Conducts validation
-func (k *kafka) validateMessage(msg []byte) (entity.State, error) {
+func (k *consumer) validateMessage(msg []byte) (entity.State, error) {
 
 	validate := validator.New()
 	var state entity.State

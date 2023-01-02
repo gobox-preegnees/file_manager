@@ -3,63 +3,94 @@ package usecase
 import (
 	"context"
 
-	repoDTO "github.com/gobox-preegnees/file_manager/internal/adapters/repo"
+	daoDTO "github.com/gobox-preegnees/file_manager/internal/adapters/dao"
 	grpcController "github.com/gobox-preegnees/file_manager/internal/controller/grpc"
 	entity "github.com/gobox-preegnees/file_manager/internal/domain/entity"
 )
 
-type FileRepo interface {
-	SaveOwner(ctx context.Context, saveOwnerDTO repoDTO.SaveOwnerDTO) (int, error)
-	RenameOwner(ctx context.Context, renameOwnerDTO repoDTO.RenameOwnerDTO) error
-	DeleteOwner(ctx context.Context, deleteOwnerDTO repoDTO.DeleteOwnerDTO) error
-	FindAllOwners(ctx context.Context, findAllOwnersReqDTO repoDTO.FindAllOwnersReqDTO) (repoDTO.FindAllOwnersRespDTO, error)
-	SaveFile(ctx context.Context, saveFileReqDTO repoDTO.SaveFileReqDTO) (int, error)
-	SetState(ctx context.Context, setStateReqDTO repoDTO.SetStateReqDTO) error
-	RenameFile(ctx context.Context, renameFileReqDTO repoDTO.RenameFileReqDTO) error
-	DeleteFile(ctx context.Context, deleteFileReqDTO repoDTO.DeleteFileReqDTO) error
-	RestoreFile(ctx context.Context, restoreFileReqDTO repoDTO.RestoreFileReqDTO) error
-	FindAllFilesByOwnerOrFileId(ctx context.Context, findAllFilesByOwnerReqDTO repoDTO.FindAllFilesByOwnerOrFileIdReqDTO) (repoDTO.FindAllFilesByOwnerOrFileIdRespDTO, error)
+//go:generate mockgen -destination=../../mocks/domain/usecase/dao/file/file.go -package=usecase_dao_file -source=file.go
+type IDaoFile interface {
+	SaveFile(ctx context.Context, saveFileReqDTO daoDTO.SaveFileReqDTO) (int, error)
+	RenameFile(ctx context.Context, renameFileReqDTO daoDTO.RenameFileReqDTO) error
+	DeleteFile(ctx context.Context, deleteFileReqDTO daoDTO.DeleteFileReqDTO) error
+	FindAllFilesByOwnerOrFileId(ctx context.Context, findAllFilesByOwnerReqDTO daoDTO.FindAllFilesByOwnerOrFileIdReqDTO) (daoDTO.FindAllFilesByOwnerOrFileIdRespDTO, error)
 }
 
 type fileUsecase struct {
-	fileRepo FileRepo
+	fileRepo IDaoFile
 }
 
-func New(fileRepo FileRepo) fileUsecase {
+func NewFileUsecase(fileRepo IDaoFile) fileUsecase {
 
 	return fileUsecase{
 		fileRepo: fileRepo,
 	}
 }
 
-func (f *fileUsecase) SaveFile(ctx context.Context, identifier entity.Identifier, file entity.File) error {
+func (f *fileUsecase) GetFiles(ctx context.Context, identifier entity.Identifier, ownerId, fileId int) ([]daoDTO.FullFile, error) {
 
-	return nil
-}
-
-func (f *fileUsecase) DeleteFile(ctx context.Context, identifier entity.Identifier, path string, hash string) error {
-
-	if hash == "" {
-
-	} else {
-
+	filesDTO, err := f.fileRepo.FindAllFilesByOwnerOrFileId(ctx, daoDTO.FindAllFilesByOwnerOrFileIdReqDTO{
+		Owner: daoDTO.Owner{
+			Identifier: daoDTO.Identifier{
+				Username: identifier.Username,
+				Folder:   identifier.Folder,
+			},
+			OwnerId: ownerId,
+		},
+		FileId: fileId,
+	})
+	if err != nil {
+		return nil, err
 	}
-	return nil
+	return filesDTO.Files, nil
 }
 
-func (f *fileUsecase) GetFiles(ctx context.Context, identifier entity.Identifier) ([]entity.File, error) {
+func (f *fileUsecase) SaveFile(ctx context.Context, identifier entity.Identifier, file entity.File, client string) (int, error) {
 
-	return []entity.File{}, nil
-}
-
-func (f *fileUsecase) RenameFile(ctx context.Context, identifier entity.Identifier, oldPath string, newPath string, hash string) error {
-
-	if hash == "" {
-
-	} else {
-
+	id, err := f.fileRepo.SaveFile(ctx, daoDTO.SaveFileReqDTO{
+		Identifier: daoDTO.Identifier{
+			Username: identifier.Username,
+			Folder:   identifier.Folder,
+		},
+		File: daoDTO.File{
+			FileName: file.FileName,
+			HashSum:  file.HashSum,
+			SizeFile: file.SizeFile,
+			ModTime:  file.ModTime,
+		},
+		Client: client,
+	})
+	if err != nil {
+		return 0, err
 	}
-	return nil
+	return id, nil
+}
+
+func (f *fileUsecase) RenameFile(ctx context.Context, identifier entity.Identifier, oldFilName, newFileName, client string) error {
+
+	err := f.fileRepo.RenameFile(ctx, daoDTO.RenameFileReqDTO{
+		Identifier: daoDTO.Identifier{
+			Username: identifier.Username,
+			Folder:   identifier.Folder,
+		},
+		Client:  client,
+		OldName: oldFilName,
+		NewName: newFileName,
+	})
+	return err
+}
+
+func (f *fileUsecase) DeleteFile(ctx context.Context, identifier entity.Identifier, client, fileName string) error {
+
+	err := f.fileRepo.DeleteFile(ctx, daoDTO.DeleteFileReqDTO{
+		Identifier: daoDTO.Identifier{
+			Username: identifier.Username,
+			Folder:   identifier.Folder,
+		},
+		Client:   client,
+		FileName: fileName,
+	})
+	return err
 }
 
 var _ grpcController.IFileUsecase = (*fileUsecase)(nil)

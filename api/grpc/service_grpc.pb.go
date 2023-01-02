@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             v3.21.5
-// source: api/contract/service.proto
+// source: api/grpc/service.proto
 
 package __
 
@@ -23,9 +23,9 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type FileManagerClient interface {
 	GetFiles(ctx context.Context, in *GetFilesReq, opts ...grpc.CallOption) (*GetFilesResp, error)
-	SaveFile(ctx context.Context, in *SaveFileReq, opts ...grpc.CallOption) (*StandardResponse, error)
-	DeleteFile(ctx context.Context, in *DeleteFileReq, opts ...grpc.CallOption) (*StandardResponse, error)
-	RenameFile(ctx context.Context, in *RenameFileReq, opts ...grpc.CallOption) (*StandardResponse, error)
+	SaveFile(ctx context.Context, in *SaveFileReq, opts ...grpc.CallOption) (*SaveFileResp, error)
+	DeleteFile(ctx context.Context, in *DeleteFileReq, opts ...grpc.CallOption) (*DeleteFileResp, error)
+	RenameFile(ctx context.Context, in *RenameFileReq, opts ...grpc.CallOption) (*RenameFileResp, error)
 }
 
 type fileManagerClient struct {
@@ -45,8 +45,8 @@ func (c *fileManagerClient) GetFiles(ctx context.Context, in *GetFilesReq, opts 
 	return out, nil
 }
 
-func (c *fileManagerClient) SaveFile(ctx context.Context, in *SaveFileReq, opts ...grpc.CallOption) (*StandardResponse, error) {
-	out := new(StandardResponse)
+func (c *fileManagerClient) SaveFile(ctx context.Context, in *SaveFileReq, opts ...grpc.CallOption) (*SaveFileResp, error) {
+	out := new(SaveFileResp)
 	err := c.cc.Invoke(ctx, "/contract.FileManager/SaveFile", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -54,8 +54,8 @@ func (c *fileManagerClient) SaveFile(ctx context.Context, in *SaveFileReq, opts 
 	return out, nil
 }
 
-func (c *fileManagerClient) DeleteFile(ctx context.Context, in *DeleteFileReq, opts ...grpc.CallOption) (*StandardResponse, error) {
-	out := new(StandardResponse)
+func (c *fileManagerClient) DeleteFile(ctx context.Context, in *DeleteFileReq, opts ...grpc.CallOption) (*DeleteFileResp, error) {
+	out := new(DeleteFileResp)
 	err := c.cc.Invoke(ctx, "/contract.FileManager/DeleteFile", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -63,8 +63,8 @@ func (c *fileManagerClient) DeleteFile(ctx context.Context, in *DeleteFileReq, o
 	return out, nil
 }
 
-func (c *fileManagerClient) RenameFile(ctx context.Context, in *RenameFileReq, opts ...grpc.CallOption) (*StandardResponse, error) {
-	out := new(StandardResponse)
+func (c *fileManagerClient) RenameFile(ctx context.Context, in *RenameFileReq, opts ...grpc.CallOption) (*RenameFileResp, error) {
+	out := new(RenameFileResp)
 	err := c.cc.Invoke(ctx, "/contract.FileManager/RenameFile", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -77,9 +77,9 @@ func (c *fileManagerClient) RenameFile(ctx context.Context, in *RenameFileReq, o
 // for forward compatibility
 type FileManagerServer interface {
 	GetFiles(context.Context, *GetFilesReq) (*GetFilesResp, error)
-	SaveFile(context.Context, *SaveFileReq) (*StandardResponse, error)
-	DeleteFile(context.Context, *DeleteFileReq) (*StandardResponse, error)
-	RenameFile(context.Context, *RenameFileReq) (*StandardResponse, error)
+	SaveFile(context.Context, *SaveFileReq) (*SaveFileResp, error)
+	DeleteFile(context.Context, *DeleteFileReq) (*DeleteFileResp, error)
+	RenameFile(context.Context, *RenameFileReq) (*RenameFileResp, error)
 	mustEmbedUnimplementedFileManagerServer()
 }
 
@@ -90,13 +90,13 @@ type UnimplementedFileManagerServer struct {
 func (UnimplementedFileManagerServer) GetFiles(context.Context, *GetFilesReq) (*GetFilesResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetFiles not implemented")
 }
-func (UnimplementedFileManagerServer) SaveFile(context.Context, *SaveFileReq) (*StandardResponse, error) {
+func (UnimplementedFileManagerServer) SaveFile(context.Context, *SaveFileReq) (*SaveFileResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SaveFile not implemented")
 }
-func (UnimplementedFileManagerServer) DeleteFile(context.Context, *DeleteFileReq) (*StandardResponse, error) {
+func (UnimplementedFileManagerServer) DeleteFile(context.Context, *DeleteFileReq) (*DeleteFileResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteFile not implemented")
 }
-func (UnimplementedFileManagerServer) RenameFile(context.Context, *RenameFileReq) (*StandardResponse, error) {
+func (UnimplementedFileManagerServer) RenameFile(context.Context, *RenameFileReq) (*RenameFileResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RenameFile not implemented")
 }
 func (UnimplementedFileManagerServer) mustEmbedUnimplementedFileManagerServer() {}
@@ -209,5 +209,127 @@ var FileManager_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "api/contract/service.proto",
+	Metadata: "api/grpc/service.proto",
+}
+
+// OwnerManagerClient is the client API for OwnerManager service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type OwnerManagerClient interface {
+	CreateOwner(ctx context.Context, in *CreateOwnerReq, opts ...grpc.CallOption) (*CreateOwnerResp, error)
+	DeleteOwner(ctx context.Context, in *DeleteOwnerReq, opts ...grpc.CallOption) (*DeleteOwnerResp, error)
+}
+
+type ownerManagerClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewOwnerManagerClient(cc grpc.ClientConnInterface) OwnerManagerClient {
+	return &ownerManagerClient{cc}
+}
+
+func (c *ownerManagerClient) CreateOwner(ctx context.Context, in *CreateOwnerReq, opts ...grpc.CallOption) (*CreateOwnerResp, error) {
+	out := new(CreateOwnerResp)
+	err := c.cc.Invoke(ctx, "/contract.OwnerManager/CreateOwner", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *ownerManagerClient) DeleteOwner(ctx context.Context, in *DeleteOwnerReq, opts ...grpc.CallOption) (*DeleteOwnerResp, error) {
+	out := new(DeleteOwnerResp)
+	err := c.cc.Invoke(ctx, "/contract.OwnerManager/DeleteOwner", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// OwnerManagerServer is the server API for OwnerManager service.
+// All implementations must embed UnimplementedOwnerManagerServer
+// for forward compatibility
+type OwnerManagerServer interface {
+	CreateOwner(context.Context, *CreateOwnerReq) (*CreateOwnerResp, error)
+	DeleteOwner(context.Context, *DeleteOwnerReq) (*DeleteOwnerResp, error)
+	mustEmbedUnimplementedOwnerManagerServer()
+}
+
+// UnimplementedOwnerManagerServer must be embedded to have forward compatible implementations.
+type UnimplementedOwnerManagerServer struct {
+}
+
+func (UnimplementedOwnerManagerServer) CreateOwner(context.Context, *CreateOwnerReq) (*CreateOwnerResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateOwner not implemented")
+}
+func (UnimplementedOwnerManagerServer) DeleteOwner(context.Context, *DeleteOwnerReq) (*DeleteOwnerResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteOwner not implemented")
+}
+func (UnimplementedOwnerManagerServer) mustEmbedUnimplementedOwnerManagerServer() {}
+
+// UnsafeOwnerManagerServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to OwnerManagerServer will
+// result in compilation errors.
+type UnsafeOwnerManagerServer interface {
+	mustEmbedUnimplementedOwnerManagerServer()
+}
+
+func RegisterOwnerManagerServer(s grpc.ServiceRegistrar, srv OwnerManagerServer) {
+	s.RegisterService(&OwnerManager_ServiceDesc, srv)
+}
+
+func _OwnerManager_CreateOwner_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateOwnerReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OwnerManagerServer).CreateOwner(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/contract.OwnerManager/CreateOwner",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OwnerManagerServer).CreateOwner(ctx, req.(*CreateOwnerReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _OwnerManager_DeleteOwner_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteOwnerReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OwnerManagerServer).DeleteOwner(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/contract.OwnerManager/DeleteOwner",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OwnerManagerServer).DeleteOwner(ctx, req.(*DeleteOwnerReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// OwnerManager_ServiceDesc is the grpc.ServiceDesc for OwnerManager service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var OwnerManager_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "contract.OwnerManager",
+	HandlerType: (*OwnerManagerServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "CreateOwner",
+			Handler:    _OwnerManager_CreateOwner_Handler,
+		},
+		{
+			MethodName: "DeleteOwner",
+			Handler:    _OwnerManager_DeleteOwner_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "api/grpc/service.proto",
 }

@@ -2,14 +2,13 @@ package entity
 
 type Identifier struct {
 	Username string
-	FolderID string
-	ClientID string
+	Folder string
 }
 
 type File struct {
+	Client string
 	FileName    string
 	HashSum     string
 	SizeFile    int64
 	ModTime     int64
-	VirtualName string
 }

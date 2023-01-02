@@ -6,63 +6,79 @@ option go_package = "./";
 
 service FileManager {
   rpc GetFiles(GetFilesReq) returns (GetFilesResp);
-  rpc SaveFile(SaveFileReq) returns (StandardResponse);
-  rpc DeleteFile(DeleteFileReq) returns (StandardResponse);
-  rpc RenameFile(RenameFileReq) returns (StandardResponse);
+  rpc SaveFile(SaveFileReq) returns (SaveFileResp);
+  rpc DeleteFile(DeleteFileReq) returns (DeleteFileResp);
+  rpc RenameFile(RenameFileReq) returns (RenameFileResp);
 }
 
 message Identifier {
   string Username = 1;
-  string FolderID = 2;
-  string ClientID = 3;
+  string Folder = 2;
 }
-
-message StandardResponse {
-  int32 Status = 1;
-  string Description = 2; 
-}
-
 message File {
-  string Path = 2;
-  string Hash = 3;
+  string HashSum = 1;
+  string FileName = 2;
+  int64 SizeFile = 3;
+  int64 ModTime = 4;
+  string Client = 5;
+}
+message FullFile {
+  int64 FileId = 1;
+  bool Removed = 2;
+  int32 State = 3;
   string VirtualName = 4;
-  int64 ModTime = 5;
-  int64 Size = 6;
-}
-
-message RenameInfo {
-  Identifier Identifier = 1;
-  string OldPath = 2;
-  string NewPath = 3;
-  string Hash = 4;
-}
-
-message ConfirmFileReq {
-  Identifier Identifier = 1;
-  string Path = 2;
-  string Hash = 3;
+  int64 OwnerId = 5;
+  File File = 6;
 }
 
 message GetFilesReq {
   Identifier Identifier = 1;
+  int64 OwnerId = 2;
+  int64 FileId = 3;
 }
 message GetFilesResp {
-  StandardResponse StandardResponse = 1;
-  repeated File File  = 2;
+  repeated FullFile FullFiles  = 1;
 }
 
 message SaveFileReq {
   Identifier Identifier = 1;
   File File = 2; 
 }
-
-message RenameFileReq {
-  Identifier Identifier = 1;
-  RenameInfo RenameInfo = 2;
+message SaveFileResp { 
+  int64 Id = 1;
 }
 
 message DeleteFileReq {
   Identifier Identifier = 1;
-  string Path = 2;
-  string Hash = 3;
+  string FileName = 2;
+  string Client = 3;
 }
+message DeleteFileResp {
+}
+
+message RenameFileReq {
+  Identifier Identifier = 1;
+  string OldFileName = 2;
+  string NewFileName = 3;
+  string Client = 4;
+}
+message RenameFileResp {
+}
+
+service OwnerManager {
+  rpc CreateOwner(CreateOwnerReq) returns (CreateOwnerResp);
+  rpc DeleteOwner(DeleteOwnerReq) returns (DeleteOwnerResp);
+}
+
+message CreateOwnerReq {
+  string Username = 1;
+  string Folder = 2;
+}
+message CreateOwnerResp {
+  int64 Id = 1;
+}
+
+message DeleteOwnerReq {
+  int64 Id = 1;
+}
+message DeleteOwnerResp {}

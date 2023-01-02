@@ -21,7 +21,7 @@ type SaveFileReqDTO struct {
 }
 type SetStateReqDTO struct {
 	Identifier
-	FileName string
+	FileName    string
 	VirtualName string
 	State       int
 }
@@ -38,8 +38,8 @@ type DeleteFileReqDTO struct {
 }
 type RestoreFileReqDTO struct {
 	Identifier
-	Client string
-    FileName string
+	Client   string
+	FileName string
 }
 type FindAllOwnersByUsernameDTO struct {
 	Username string
@@ -51,7 +51,7 @@ type FindAllFilesByOwnerOrFileIdReqDTO struct {
 type FullFile struct {
 	Owner
 	File
-	File_id     int
+	FileId      int
 	Removed     bool
 	VirtualName string
 	State       int

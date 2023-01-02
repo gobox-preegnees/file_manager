@@ -3,10 +3,9 @@ package postgresql
 import (
 	"context"
 	"os"
-	// "strconv"
-	repoDTO "github.com/gobox-preegnees/file_manager/internal/adapters/repo"
 	"testing"
-	// "github.com/gobox-preegnees/file_manager/internal/domain/entity"
+
+	daoDTO "github.com/gobox-preegnees/file_manager/internal/adapters/dao"
 )
 
 var postgres *postgresql
@@ -62,8 +61,8 @@ func TestSaveOwner(t *testing.T) {
 
 	for _, d := range data {
 		t.Run("test", func(t *testing.T) {
-			id, err := postgres.SaveOwner(ctx, repoDTO.SaveOwnerDTO{
-				Identifier: repoDTO.Identifier{
+			id, err := postgres.SaveOwner(ctx, daoDTO.SaveOwnerDTO{
+				Identifier: daoDTO.Identifier{
 					Username: d.Username,
 					Folder:   d.Folder,
 				},
@@ -106,8 +105,8 @@ func TestRenameOwner(t *testing.T) {
 
 	for _, d := range data {
 		t.Run("test", func(t *testing.T) {
-			id, err := postgres.SaveOwner(ctx, repoDTO.SaveOwnerDTO{
-				Identifier: repoDTO.Identifier{
+			id, err := postgres.SaveOwner(ctx, daoDTO.SaveOwnerDTO{
+				Identifier: daoDTO.Identifier{
 					Username: d.Username,
 					Folder:   d.Folder,
 				},
@@ -120,7 +119,7 @@ func TestRenameOwner(t *testing.T) {
 			}
 			t.Logf("id=%d", id)
 
-			err = postgres.RenameOwner(ctx, repoDTO.RenameOwnerDTO{
+			err = postgres.RenameOwner(ctx, daoDTO.RenameOwnerDTO{
 				OwnerID: id,
 				NewName: d.NewName,
 			})
@@ -156,8 +155,8 @@ func TestDeleteOwner(t *testing.T) {
 
 	for _, d := range data {
 		t.Run("test", func(t *testing.T) {
-			id, err := postgres.SaveOwner(ctx, repoDTO.SaveOwnerDTO{
-				Identifier: repoDTO.Identifier{
+			id, err := postgres.SaveOwner(ctx, daoDTO.SaveOwnerDTO{
+				Identifier: daoDTO.Identifier{
 					Username: d.Username,
 					Folder:   d.Folder,
 				},
@@ -170,7 +169,7 @@ func TestDeleteOwner(t *testing.T) {
 			}
 			t.Logf("id=%d", id)
 
-			err = postgres.DeleteOwner(ctx, repoDTO.DeleteOwnerDTO{
+			err = postgres.DeleteOwner(ctx, daoDTO.DeleteOwnerDTO{
 				OwnerID: id,
 			})
 			if err != nil {
@@ -221,8 +220,8 @@ func TestFindAllOwners(t *testing.T) {
 
 	for _, d := range data {
 		t.Run("test", func(t *testing.T) {
-			id, err := postgres.SaveOwner(ctx, repoDTO.SaveOwnerDTO{
-				Identifier: repoDTO.Identifier{
+			id, err := postgres.SaveOwner(ctx, daoDTO.SaveOwnerDTO{
+				Identifier: daoDTO.Identifier{
 					Username: d.Username,
 					Folder:   d.Folder,
 				},
@@ -235,7 +234,7 @@ func TestFindAllOwners(t *testing.T) {
 			}
 			t.Logf("id=%d", id)
 
-			owners, err := postgres.FindAllOwners(ctx, repoDTO.FindAllOwnersReqDTO{
+			owners, err := postgres.FindAllOwners(ctx, daoDTO.FindAllOwnersReqDTO{
 				Username: d.Username,
 			})
 			if err != nil {
@@ -256,17 +255,17 @@ func TestSaveFile(t *testing.T) {
 	defer truncate()
 
 	data := []struct {
-		repoDTO.Identifier
-		repoDTO.File
+		daoDTO.Identifier
+		daoDTO.File
 		ClientId string
 		Err      bool
 	}{
 		{
-			Identifier: repoDTO.Identifier{
+			Identifier: daoDTO.Identifier{
 				Username: "1",
 				Folder:   "1",
 			},
-			File: repoDTO.File{
+			File: daoDTO.File{
 				FileName: "/tmp/test.txt",
 				SizeFile: 1,
 				HashSum:  "1",
@@ -276,11 +275,11 @@ func TestSaveFile(t *testing.T) {
 			Err:      false,
 		},
 		{
-			Identifier: repoDTO.Identifier{
+			Identifier: daoDTO.Identifier{
 				Username: "1",
 				Folder:   "1",
 			},
-			File: repoDTO.File{
+			File: daoDTO.File{
 				FileName: "/tmp/test.txt",
 				SizeFile: 1,
 				HashSum:  "1",
@@ -293,11 +292,11 @@ func TestSaveFile(t *testing.T) {
 
 	for _, d := range data {
 		t.Run("test", func(t *testing.T) {
-			_, _ = postgres.SaveOwner(ctx, repoDTO.SaveOwnerDTO{
+			_, _ = postgres.SaveOwner(ctx, daoDTO.SaveOwnerDTO{
 				Identifier: d.Identifier,
 			})
 
-			id, err := postgres.SaveFile(ctx, repoDTO.SaveFileReqDTO{
+			id, err := postgres.SaveFile(ctx, daoDTO.SaveFileReqDTO{
 				Identifier: d.Identifier,
 				File:       d.File,
 				Client:     d.ClientId,
@@ -323,19 +322,19 @@ func TestSetState(t *testing.T) {
 	defer truncate()
 
 	data := []struct {
-		repoDTO.Identifier
-		repoDTO.File
+		daoDTO.Identifier
+		daoDTO.File
 		ClientId    string
 		VirtualName string
 		State       int
 		Err         bool
 	}{
 		{
-			Identifier: repoDTO.Identifier{
+			Identifier: daoDTO.Identifier{
 				Username: "1",
 				Folder:   "1",
 			},
-			File: repoDTO.File{
+			File: daoDTO.File{
 				FileName: "/tmp/test.txt",
 				SizeFile: 1,
 				HashSum:  "1",
@@ -343,15 +342,31 @@ func TestSetState(t *testing.T) {
 			},
 			ClientId:    "1",
 			VirtualName: "1",
-			State:       200,
+			State:       300,
 			Err:         false,
 		},
 		{
-			Identifier: repoDTO.Identifier{
+			Identifier: daoDTO.Identifier{
 				Username: "1",
 				Folder:   "1",
 			},
-			File: repoDTO.File{
+			File: daoDTO.File{
+				FileName: "/tmp/test.txt",
+				SizeFile: 1,
+				HashSum:  "1",
+				ModTime:  1,
+			},
+			ClientId:    "1",
+			VirtualName: "1",
+			State:       100,
+			Err:         false,
+		},
+		{
+			Identifier: daoDTO.Identifier{
+				Username: "1",
+				Folder:   "1",
+			},
+			File: daoDTO.File{
 				FileName: "invalid name",
 				SizeFile: 1,
 				HashSum:  "1",
@@ -366,18 +381,18 @@ func TestSetState(t *testing.T) {
 
 	for _, d := range data {
 		t.Run("test", func(t *testing.T) {
-			_, _ = postgres.SaveOwner(ctx, repoDTO.SaveOwnerDTO{
+			_, _ = postgres.SaveOwner(ctx, daoDTO.SaveOwnerDTO{
 				Identifier: d.Identifier,
 			})
 
-			_, _ = postgres.SaveFile(ctx, repoDTO.SaveFileReqDTO{
+			_, _ = postgres.SaveFile(ctx, daoDTO.SaveFileReqDTO{
 				Identifier: d.Identifier,
 				File:       d.File,
 				Client:     d.ClientId,
 			})
 
-			err := postgres.SetState(ctx, repoDTO.SetStateReqDTO{
-				Identifier: repoDTO.Identifier{
+			err := postgres.SetState(ctx, daoDTO.SetStateReqDTO{
+				Identifier: daoDTO.Identifier{
 					Username: d.Username,
 					Folder:   d.Folder,
 				},
@@ -401,19 +416,19 @@ func TestRenameFile(t *testing.T) {
 	defer truncate()
 
 	data := []struct {
-		repoDTO.Identifier
-		files    []repoDTO.File
+		daoDTO.Identifier
+		files    []daoDTO.File
 		ClientId string
 		NewName  string
 		OldName  string
 		Err      bool
 	}{
 		{
-			Identifier: repoDTO.Identifier{
+			Identifier: daoDTO.Identifier{
 				Username: "1",
 				Folder:   "1",
 			},
-			files: []repoDTO.File{
+			files: []daoDTO.File{
 				{
 					FileName: "folder/test.txt",
 					SizeFile: 1,
@@ -427,11 +442,11 @@ func TestRenameFile(t *testing.T) {
 			Err:      false,
 		},
 		{
-			Identifier: repoDTO.Identifier{
+			Identifier: daoDTO.Identifier{
 				Username: "1",
 				Folder:   "1",
 			},
-			files: []repoDTO.File{
+			files: []daoDTO.File{
 				{
 					FileName: "not/test.txt",
 					SizeFile: 2,
@@ -463,11 +478,11 @@ func TestRenameFile(t *testing.T) {
 			Err:      false,
 		},
 		{
-			Identifier: repoDTO.Identifier{
+			Identifier: daoDTO.Identifier{
 				Username: "1",
 				Folder:   "1",
 			},
-			files: []repoDTO.File{
+			files: []daoDTO.File{
 				{
 					FileName: "11not/test.txt",
 					SizeFile: 3,
@@ -496,12 +511,12 @@ func TestRenameFile(t *testing.T) {
 
 	for _, d := range data {
 		t.Run("test", func(t *testing.T) {
-			_, _ = postgres.SaveOwner(ctx, repoDTO.SaveOwnerDTO{
+			_, _ = postgres.SaveOwner(ctx, daoDTO.SaveOwnerDTO{
 				Identifier: d.Identifier,
 			})
 
 			for _, f := range d.files {
-				_, err := postgres.SaveFile(ctx, repoDTO.SaveFileReqDTO{
+				_, err := postgres.SaveFile(ctx, daoDTO.SaveFileReqDTO{
 					Identifier: d.Identifier,
 					File:       f,
 					Client:     d.ClientId,
@@ -511,8 +526,8 @@ func TestRenameFile(t *testing.T) {
 				}
 			}
 
-			err := postgres.RenameFile(ctx, repoDTO.RenameFileReqDTO{
-				Identifier: repoDTO.Identifier{
+			err := postgres.RenameFile(ctx, daoDTO.RenameFileReqDTO{
+				Identifier: daoDTO.Identifier{
 					Username: d.Username,
 					Folder:   d.Folder,
 				},
@@ -536,18 +551,18 @@ func TestDeleteFileAndRestoreFile(t *testing.T) {
 	defer truncate()
 
 	data := []struct {
-		repoDTO.Identifier
-		files    []repoDTO.File
+		daoDTO.Identifier
+		files    []daoDTO.File
 		ClientId string
 		FileName string
 		Err      bool
 	}{
 		{
-			Identifier: repoDTO.Identifier{
+			Identifier: daoDTO.Identifier{
 				Username: "username",
 				Folder:   "1",
 			},
-			files: []repoDTO.File{
+			files: []daoDTO.File{
 				{
 					FileName: "folder/test.txt",
 					SizeFile: 1,
@@ -560,11 +575,11 @@ func TestDeleteFileAndRestoreFile(t *testing.T) {
 			Err:      false,
 		},
 		{
-			Identifier: repoDTO.Identifier{
+			Identifier: daoDTO.Identifier{
 				Username: "username",
 				Folder:   "1",
 			},
-			files: []repoDTO.File{
+			files: []daoDTO.File{
 				{
 					FileName: "not/test.txt",
 					SizeFile: 2,
@@ -595,11 +610,11 @@ func TestDeleteFileAndRestoreFile(t *testing.T) {
 			Err:      false,
 		},
 		{
-			Identifier: repoDTO.Identifier{
+			Identifier: daoDTO.Identifier{
 				Username: "username",
 				Folder:   "1",
 			},
-			files: []repoDTO.File{
+			files: []daoDTO.File{
 				{
 					FileName: "11not/test.txt",
 					SizeFile: 3,
@@ -627,12 +642,12 @@ func TestDeleteFileAndRestoreFile(t *testing.T) {
 
 	for _, d := range data {
 		t.Run("test", func(t *testing.T) {
-			_, _ = postgres.SaveOwner(ctx, repoDTO.SaveOwnerDTO{
+			_, _ = postgres.SaveOwner(ctx, daoDTO.SaveOwnerDTO{
 				Identifier: d.Identifier,
 			})
 
 			for _, f := range d.files {
-				_, err := postgres.SaveFile(ctx, repoDTO.SaveFileReqDTO{
+				_, err := postgres.SaveFile(ctx, daoDTO.SaveFileReqDTO{
 					Identifier: d.Identifier,
 					File:       f,
 					Client:     d.ClientId,
@@ -642,8 +657,8 @@ func TestDeleteFileAndRestoreFile(t *testing.T) {
 				}
 			}
 
-			err := postgres.DeleteFile(ctx, repoDTO.DeleteFileReqDTO{
-				Identifier: repoDTO.Identifier{
+			err := postgres.DeleteFile(ctx, daoDTO.DeleteFileReqDTO{
+				Identifier: daoDTO.Identifier{
 					Username: d.Username,
 					Folder:   d.Folder,
 				},
@@ -657,8 +672,8 @@ func TestDeleteFileAndRestoreFile(t *testing.T) {
 				}
 			}
 
-			err = postgres.RestoreFile(ctx, repoDTO.RestoreFileReqDTO{
-				Identifier: repoDTO.Identifier{
+			err = postgres.RestoreFile(ctx, daoDTO.RestoreFileReqDTO{
+				Identifier: daoDTO.Identifier{
 					Username: d.Username,
 					Folder:   d.Folder,
 				},
@@ -681,8 +696,8 @@ func TestFindAllFilesByOwner(t *testing.T) {
 	defer truncate()
 
 	data := []struct {
-		Identifier          repoDTO.Identifier
-		files               []repoDTO.File
+		Identifier          daoDTO.Identifier
+		files               []daoDTO.File
 		Client              string
 		ByOwnerId           bool
 		ByFileId            bool
@@ -691,7 +706,7 @@ func TestFindAllFilesByOwner(t *testing.T) {
 		Count               int
 	}{
 		{
-			files: []repoDTO.File{
+			files: []daoDTO.File{
 				{
 					FileName: "11not/test.txt",
 					SizeFile: 3,
@@ -711,7 +726,7 @@ func TestFindAllFilesByOwner(t *testing.T) {
 					ModTime:  5,
 				},
 			},
-			Identifier: repoDTO.Identifier{
+			Identifier: daoDTO.Identifier{
 				Username: "username",
 				Folder:   "folder",
 			},
@@ -723,7 +738,7 @@ func TestFindAllFilesByOwner(t *testing.T) {
 			Err:                 false,
 		},
 		{
-			files: []repoDTO.File{
+			files: []daoDTO.File{
 				{
 					FileName: "vyub67u67/test.txt",
 					SizeFile: 30,
@@ -743,7 +758,7 @@ func TestFindAllFilesByOwner(t *testing.T) {
 					ModTime:  50,
 				},
 			},
-			Identifier: repoDTO.Identifier{
+			Identifier: daoDTO.Identifier{
 				Username: "username",
 				Folder:   "folder",
 			},
@@ -755,7 +770,7 @@ func TestFindAllFilesByOwner(t *testing.T) {
 			Err:                 false,
 		},
 		{
-			files: []repoDTO.File{
+			files: []daoDTO.File{
 				{
 					FileName: "abcdef",
 					SizeFile: 6,
@@ -769,7 +784,7 @@ func TestFindAllFilesByOwner(t *testing.T) {
 					ModTime:  7,
 				},
 			},
-			Identifier: repoDTO.Identifier{
+			Identifier: daoDTO.Identifier{
 				Username: "username",
 				Folder:   "folder",
 			},
@@ -782,7 +797,7 @@ func TestFindAllFilesByOwner(t *testing.T) {
 		},
 	}
 
-	ownerID, err := postgres.SaveOwner(ctx, repoDTO.SaveOwnerDTO{
+	ownerID, err := postgres.SaveOwner(ctx, daoDTO.SaveOwnerDTO{
 		Identifier: data[0].Identifier,
 	})
 	if err != nil {
@@ -793,7 +808,7 @@ func TestFindAllFilesByOwner(t *testing.T) {
 		t.Run("test", func(t *testing.T) {
 			var fileIDs = make([]int, 0)
 			for _, f := range d.files {
-				fileID, err := postgres.SaveFile(ctx, repoDTO.SaveFileReqDTO{
+				fileID, err := postgres.SaveFile(ctx, daoDTO.SaveFileReqDTO{
 					Identifier: d.Identifier,
 					File:       f,
 					Client:     d.Client,
@@ -805,22 +820,22 @@ func TestFindAllFilesByOwner(t *testing.T) {
 			}
 
 			var err error
-			var files repoDTO.FindAllFilesByOwnerOrFileIdRespDTO
+			var files daoDTO.FindAllFilesByOwnerOrFileIdRespDTO
 
 			if d.ByOwnerId {
-				files, err = postgres.FindAllFilesByOwnerOrFileId(ctx, repoDTO.FindAllFilesByOwnerOrFileIdReqDTO{
-					Owner: repoDTO.Owner{
+				files, err = postgres.FindAllFilesByOwnerOrFileId(ctx, daoDTO.FindAllFilesByOwnerOrFileIdReqDTO{
+					Owner: daoDTO.Owner{
 						OwnerId: ownerID,
 					},
 				})
 			} else if d.ByUsernameAndFolder {
-				files, err = postgres.FindAllFilesByOwnerOrFileId(ctx, repoDTO.FindAllFilesByOwnerOrFileIdReqDTO{
-					Owner: repoDTO.Owner{
+				files, err = postgres.FindAllFilesByOwnerOrFileId(ctx, daoDTO.FindAllFilesByOwnerOrFileIdReqDTO{
+					Owner: daoDTO.Owner{
 						Identifier: d.Identifier,
 					},
 				})
 			} else if d.ByFileId {
-				files, err = postgres.FindAllFilesByOwnerOrFileId(ctx, repoDTO.FindAllFilesByOwnerOrFileIdReqDTO{
+				files, err = postgres.FindAllFilesByOwnerOrFileId(ctx, daoDTO.FindAllFilesByOwnerOrFileIdReqDTO{
 					FileId: fileIDs[0],
 				})
 			}

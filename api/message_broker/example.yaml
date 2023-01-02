@@ -4,4 +4,3 @@ folder: !!str "" # virtual folder which person has created in Personal Area
 file_name: !!str "" # real name of file which is uploading to server 
 virtual_name: !!str "" # virtual name of file which is created on uploading automatically
 state: !!int 200 # 200-uploading, 300-uploaded, 400-error
-
