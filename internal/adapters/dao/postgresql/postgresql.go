@@ -315,4 +315,5 @@ func (p *postgresql) FindAllFilesByOwnerOrFileId(ctx context.Context, FindAllFil
 }
 
 var _ usecase.IDaoFile = (*postgresql)(nil)
-// var _ servic
+var _ usecase.IDaoOwner = (*postgresql)(nil)
+var _ usecase.IDaoState = (*postgresql)(nil)

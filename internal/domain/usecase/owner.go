@@ -5,14 +5,15 @@ import (
 	"time"
 
 	entity "github.com/gobox-preegnees/file_manager/internal/domain/entity"
+	daoDTO "github.com/gobox-preegnees/file_manager/internal/adapters/dao"
 
 	"github.com/sirupsen/logrus"
 )
 
 //go:generate mockgen -destination=../../mocks/domain/usecase/dao/owner/owner.go -package=usecase_dao_owner -source=file.go
 type IDaoOwner interface {
-	DeleteOwner(int) error
-	SaveOwner(entity.Owner) (int, error)
+	DeleteOwner(ctx context.Context, deleteOwnerDTO daoDTO.DeleteOwnerDTO) error
+	SaveOwner(ctx context.Context, saveOwnerDTO daoDTO.SaveOwnerDTO) (int, error)
 }
 
 //go:generate mockgen -destination=../../mocks/domain/usecase/service/owner/owner.go -package=usecase_service_owner -source=file.go
@@ -37,7 +38,9 @@ func NewOwnerUsecase(log *logrus.Logger, dao IDaoOwner, service IServiceOwner) *
 
 func (o *ownerUsecase) CreateOwner(ctx context.Context, owner entity.Owner) (int, error) {
 
-	id, err := o.dao.SaveOwner(owner)
+	id, err := o.dao.SaveOwner(ctx, daoDTO.SaveOwnerDTO{
+		Identifier: daoDTO.Identifier{},
+	})
 	if err != nil {
 		o.log.Error(err)
 		if err := o.service.SendMessage(entity.Message{
@@ -54,7 +57,9 @@ func (o *ownerUsecase) CreateOwner(ctx context.Context, owner entity.Owner) (int
 
 func (o *ownerUsecase) DeleteOwner(ctx context.Context, id int) error {
 
-	if err := o.dao.DeleteOwner(id); err != nil {
+	if err := o.dao.DeleteOwner(ctx, daoDTO.DeleteOwnerDTO{
+		OwnerID: id,
+	}); err != nil {
 		o.log.Error(err)
 		if err := o.service.SendMessage(entity.Message{
 			Message:   err.Error(),
