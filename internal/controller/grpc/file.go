@@ -9,7 +9,7 @@ import (
 
 func (s *server) GetFiles(ctx context.Context, in *pb.GetFilesReq) (*pb.GetFilesResp, error) {
 
-	files, err := s.fileUsecase.GetFiles(ctx, entity.Identifier{
+	files, err := s.fileService.GetFiles(ctx, entity.Identifier{
 		Username: in.Identifier.Username,
 		Folder:   in.Identifier.Folder,
 	}, int(in.OwnerId), int(in.FileId))
@@ -42,7 +42,7 @@ func (s *server) GetFiles(ctx context.Context, in *pb.GetFilesReq) (*pb.GetFiles
 
 func (s *server) SaveFile(ctx context.Context, in *pb.SaveFileReq) (*pb.SaveFileResp, error) {
 
-	id, err := s.fileUsecase.SaveFile(ctx, entity.Identifier{
+	id, err := s.fileService.SaveFile(ctx, entity.Identifier{
 		Username: in.Identifier.Username,
 		Folder:   in.Identifier.Folder,
 	}, entity.File{
@@ -59,7 +59,7 @@ func (s *server) SaveFile(ctx context.Context, in *pb.SaveFileReq) (*pb.SaveFile
 
 func (s *server) DeleteFile(ctx context.Context, in *pb.DeleteFileReq) (*pb.DeleteFileResp, error) {
 
-	err := s.fileUsecase.DeleteFile(ctx, entity.Identifier{
+	err := s.fileService.DeleteFile(ctx, entity.Identifier{
 		Username: in.Identifier.Username,
 		Folder:   in.Identifier.Folder,
 	}, in.FileName, in.Client)
@@ -68,7 +68,7 @@ func (s *server) DeleteFile(ctx context.Context, in *pb.DeleteFileReq) (*pb.Dele
 
 func (s *server) RenameFile(ctx context.Context, in *pb.RenameFileReq) (*pb.RenameFileResp, error) {
 
-	err := s.fileUsecase.RenameFile(ctx, entity.Identifier{
+	err := s.fileService.RenameFile(ctx, entity.Identifier{
 		Username: in.Identifier.Username,
 		Folder:   in.Identifier.Folder,
 	}, in.OldFileName, in.NewFileName, in.Client)

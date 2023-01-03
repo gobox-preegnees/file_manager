@@ -14,7 +14,7 @@ import (
 )
 
 //go:generate mockgen -destination=../../mocks/kafka/consumer/state/usecase.go -package=kafka -source=consumer.go
-type IStateUsecase interface {
+type IStateSerivce interface {
 	SetState(context.Context, entity.State)
 }
 
@@ -29,7 +29,7 @@ type consumer struct {
 	ctx          context.Context
 	log          *logrus.Logger
 	reader       *kafka.Reader
-	stateUsecase IStateUsecase
+	stateService IStateSerivce
 }
 
 // KafkaCnf. Config for consumer
@@ -37,10 +37,10 @@ type ConsumerCnf struct {
 	Ctx          context.Context
 	Log          *logrus.Logger
 	Topic        string
-	Addrs    []string
+	Addrs        []string
 	GroupId      string
 	Partition    int
-	StateUsecase IStateUsecase
+	StateService IStateSerivce
 }
 
 // New. Create new consumer instance
@@ -62,7 +62,7 @@ func NewConsumer(cnf ConsumerCnf) *consumer {
 		ctx:          cnf.Ctx,
 		log:          cnf.Log,
 		reader:       reader,
-		stateUsecase: cnf.StateUsecase,
+		stateService: cnf.StateService,
 	}
 }
 
@@ -87,7 +87,7 @@ func (k *consumer) Run() error {
 		}
 		k.log.Debugf("state: %v", state)
 
-		k.stateUsecase.SetState(context.Background(), state)
+		k.stateService.SetState(context.Background(), state)
 		k.log.Debugf("success set state: %v", state)
 	}
 }

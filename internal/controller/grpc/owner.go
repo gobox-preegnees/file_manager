@@ -9,7 +9,7 @@ import (
 
 func (s *server) CreateOwner(ctx context.Context, in *pb.CreateOwnerReq) (*pb.CreateOwnerResp, error) {
 
-	id, err := s.ownerUsecase.CreateOwner(ctx, entity.Owner{
+	id, err := s.ownerService.CreateOwner(ctx, entity.Owner{
 		Username: in.Username,
 		Folder:   in.Folder,
 	})
@@ -21,5 +21,5 @@ func (s *server) CreateOwner(ctx context.Context, in *pb.CreateOwnerReq) (*pb.Cr
 
 func (s *server) DeleteOwner(ctx context.Context, in *pb.DeleteOwnerReq) (*pb.DeleteOwnerResp, error) {
 
-	return nil, s.ownerUsecase.DeleteOwner(ctx, int(in.Id))
+	return nil, s.ownerService.DeleteOwner(ctx, int(in.Id))
 }

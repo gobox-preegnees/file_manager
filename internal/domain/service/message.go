@@ -1,4 +1,4 @@
-package services
+package service
 
 import (
 	"context"
@@ -10,11 +10,12 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+//go:generate mockgen -destination=../../mocks/domain/service/message_broker_message/message.go -package=message_broker_message -source=message.go
 type IMessageBroker interface {
 	PublishErr(mbDTO.PublishErrReqDTO) error
 }
 
-type service struct {
+type messageService struct {
 	ctx           context.Context
 	log           *logrus.Logger
 	messageBroker IMessageBroker
@@ -26,16 +27,16 @@ type ConfServices struct {
 	MessageBroker IMessageBroker
 }
 
-func NewServices(cnf ConfServices) *service {
+func NewServices(cnf ConfServices) *messageService {
 
-	return &service{
+	return &messageService{
 		ctx:           cnf.Ctx,
 		log:           cnf.Log,
 		messageBroker: cnf.MessageBroker,
 	}
 }
 
-func (s *service) SendMessage(message entity.Message) error {
+func (s messageService) SendMessage(message entity.Message) error {
 
 	if message.IsErr {
 		jData, err := json.Marshal(message)

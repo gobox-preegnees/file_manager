@@ -65,7 +65,7 @@ func TestValidateModel(t *testing.T) {
 		Addrs:        []string{"localhost:29092"},
 		GroupId:      "id",
 		Partition:    0,
-		StateUsecase: nil,
+		StateService: nil,
 	})
 
 	for _, d := range data {
@@ -149,7 +149,7 @@ func TestConsumerWork(t *testing.T) {
 		Addrs:        []string{addr[0]},
 		GroupId:      groupId,
 		Partition:    partition,
-		StateUsecase: mockConsumer,
+		StateService: mockConsumer,
 	}
 	kafka := NewConsumer(cnf)
 	err := kafka.Run()

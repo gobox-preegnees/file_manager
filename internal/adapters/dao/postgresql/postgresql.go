@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	daoDTO "github.com/gobox-preegnees/file_manager/internal/adapters/dao"
-	usecase "github.com/gobox-preegnees/file_manager/internal/domain/usecase"
+	service "github.com/gobox-preegnees/file_manager/internal/domain/service"
 	state "github.com/gobox-preegnees/file_manager/pkg/state"
 
 	"github.com/jackc/pgx/v5"
@@ -16,7 +16,7 @@ var (
 	ErrInvalidOwner = errors.New("Invalid Owner On FindAllByOwner")
 )
 
-// postgresql. Implementation of the usecase package interface
+// postgresql. Implementation of the service package interface
 type postgresql struct {
 	conn *pgx.Conn
 }
@@ -314,6 +314,6 @@ func (p *postgresql) FindAllFilesByOwnerOrFileId(ctx context.Context, FindAllFil
 	}, nil
 }
 
-var _ usecase.IDaoFile = (*postgresql)(nil)
-var _ usecase.IDaoOwner = (*postgresql)(nil)
-var _ usecase.IDaoState = (*postgresql)(nil)
+var _ service.IDaoFile = (*postgresql)(nil)
+var _ service.IDaoOwner = (*postgresql)(nil)
+var _ service.IDaoState = (*postgresql)(nil)

@@ -1,11 +1,11 @@
-package usecase
+package service
 
 import (
 	"context"
 
 	daoDTO "github.com/gobox-preegnees/file_manager/internal/adapters/dao"
 	grpcController "github.com/gobox-preegnees/file_manager/internal/controller/grpc"
-	entity "github.com/gobox-preegnees/file_manager/internal/domain/entity"
+	"github.com/gobox-preegnees/file_manager/internal/domain/entity"
 	"github.com/sirupsen/logrus"
 )
 
@@ -19,20 +19,20 @@ type IDaoFile interface {
 
 type fileUsecase struct {
 	log      *logrus.Logger
-	fileRepo IDaoFile
+	daoFile IDaoFile
 }
 
-func NewFileUsecase(log *logrus.Logger, fileRepo IDaoFile) *fileUsecase {
+func NewFileUsecase(log *logrus.Logger, daoFile IDaoFile) *fileUsecase {
 
 	return &fileUsecase{
 		log:      log,
-		fileRepo: fileRepo,
+		daoFile: daoFile,
 	}
 }
 
-func (f *fileUsecase) GetFiles(ctx context.Context, identifier entity.Identifier, ownerId, fileId int) ([]daoDTO.FullFile, error) {
+func (f fileUsecase) GetFiles(ctx context.Context, identifier entity.Identifier, ownerId, fileId int) ([]daoDTO.FullFile, error) {
 
-	filesDTO, err := f.fileRepo.FindAllFilesByOwnerOrFileId(ctx, daoDTO.FindAllFilesByOwnerOrFileIdReqDTO{
+	filesDTO, err := f.daoFile.FindAllFilesByOwnerOrFileId(ctx, daoDTO.FindAllFilesByOwnerOrFileIdReqDTO{
 		Owner: daoDTO.Owner{
 			Identifier: daoDTO.Identifier{
 				Username: identifier.Username,
@@ -48,9 +48,9 @@ func (f *fileUsecase) GetFiles(ctx context.Context, identifier entity.Identifier
 	return filesDTO.Files, nil
 }
 
-func (f *fileUsecase) SaveFile(ctx context.Context, identifier entity.Identifier, file entity.File, client string) (int, error) {
+func (f fileUsecase) SaveFile(ctx context.Context, identifier entity.Identifier, file entity.File, client string) (int, error) {
 
-	id, err := f.fileRepo.SaveFile(ctx, daoDTO.SaveFileReqDTO{
+	id, err := f.daoFile.SaveFile(ctx, daoDTO.SaveFileReqDTO{
 		Identifier: daoDTO.Identifier{
 			Username: identifier.Username,
 			Folder:   identifier.Folder,
@@ -69,9 +69,9 @@ func (f *fileUsecase) SaveFile(ctx context.Context, identifier entity.Identifier
 	return id, nil
 }
 
-func (f *fileUsecase) RenameFile(ctx context.Context, identifier entity.Identifier, oldFilName, newFileName, client string) error {
+func (f fileUsecase) RenameFile(ctx context.Context, identifier entity.Identifier, oldFilName, newFileName, client string) error {
 
-	err := f.fileRepo.RenameFile(ctx, daoDTO.RenameFileReqDTO{
+	err := f.daoFile.RenameFile(ctx, daoDTO.RenameFileReqDTO{
 		Identifier: daoDTO.Identifier{
 			Username: identifier.Username,
 			Folder:   identifier.Folder,
@@ -83,9 +83,9 @@ func (f *fileUsecase) RenameFile(ctx context.Context, identifier entity.Identifi
 	return err
 }
 
-func (f *fileUsecase) DeleteFile(ctx context.Context, identifier entity.Identifier, client, fileName string) error {
+func (f fileUsecase) DeleteFile(ctx context.Context, identifier entity.Identifier, client, fileName string) error {
 
-	err := f.fileRepo.DeleteFile(ctx, daoDTO.DeleteFileReqDTO{
+	err := f.daoFile.DeleteFile(ctx, daoDTO.DeleteFileReqDTO{
 		Identifier: daoDTO.Identifier{
 			Username: identifier.Username,
 			Folder:   identifier.Folder,
@@ -96,4 +96,4 @@ func (f *fileUsecase) DeleteFile(ctx context.Context, identifier entity.Identifi
 	return err
 }
 
-var _ grpcController.IFileUsecase = (*fileUsecase)(nil)
+var _ grpcController.IFileService = (*fileUsecase)(nil)
