@@ -8,7 +8,6 @@ import (
 	daoDTO "github.com/gobox-preegnees/file_manager/internal/adapters/dao"
 	dtoService "github.com/gobox-preegnees/file_manager/internal/domain"
 
-
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 )
@@ -39,34 +38,33 @@ type server struct {
 }
 
 // GrpcServerConf.
-type GrpcServerConf struct {
+type CnfGrpcServer struct {
 	Address      string
 	FileService  IFileService
 	OwnerService IOwnerService
 }
 
 // NewServer.
-func NewServer(conf GrpcServerConf) *server {
+func NewServer(cnf CnfGrpcServer) *server {
 
 	return &server{
-		fileService:  conf.FileService,
-		ownerService: conf.OwnerService,
-		address:      conf.Address,
+		fileService:  cnf.FileService,
+		ownerService: cnf.OwnerService,
+		address:      cnf.Address,
 	}
 }
 
 // Run.
-func (s server) Run() {
+func (s server) Run() error {
 
 	listener, err := net.Listen("tcp", s.address)
 	if err != nil {
-		s.log.Fatal(err)
+		return err
 	}
+	s.log.Infof("File Manager server listening on %s", s.address)
 
 	baseServer := grpc.NewServer(grpc.EmptyServerOption{})
 	pb.RegisterFileManagerServer(baseServer, &server{})
 	pb.RegisterOwnerManagerServer(baseServer, &server{})
-	if err := baseServer.Serve(listener); err != nil {
-		s.log.Fatal(err)
-	}
+	return baseServer.Serve(listener)
 }

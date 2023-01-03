@@ -4,13 +4,13 @@ import (
 	"context"
 
 	pb "github.com/gobox-preegnees/file_manager/api/grpc"
-	"github.com/gobox-preegnees/file_manager/internal/domain"
-	"github.com/gobox-preegnees/file_manager/internal/domain/entity"
+	dtoService "github.com/gobox-preegnees/file_manager/internal/domain"
+	entity "github.com/gobox-preegnees/file_manager/internal/domain/entity"
 )
 
 func (s *server) GetFiles(ctx context.Context, in *pb.GetFilesReq) (*pb.GetFilesResp, error) {
 
-	files, err := s.fileService.GetFiles(ctx, domain.GetFilesReqDTO{
+	files, err := s.fileService.GetFiles(ctx, dtoService.GetFilesReqDTO{
 		Identifier: entity.Identifier{
 			Username: in.Identifier.Username,
 			Folder:   in.Identifier.Folder,
@@ -47,7 +47,7 @@ func (s *server) GetFiles(ctx context.Context, in *pb.GetFilesReq) (*pb.GetFiles
 
 func (s *server) SaveFile(ctx context.Context, in *pb.SaveFileReq) (*pb.SaveFileResp, error) {
 
-	id, err := s.fileService.SaveFile(ctx, domain.SaveFileReqDTO{
+	id, err := s.fileService.SaveFile(ctx, dtoService.SaveFileReqDTO{
 		Identifier: entity.Identifier{
 			Username: in.Identifier.Username,
 			Folder:   in.Identifier.Folder,
@@ -68,7 +68,7 @@ func (s *server) SaveFile(ctx context.Context, in *pb.SaveFileReq) (*pb.SaveFile
 
 func (s *server) DeleteFile(ctx context.Context, in *pb.DeleteFileReq) (*pb.DeleteFileResp, error) {
 
-	err := s.fileService.DeleteFile(ctx, domain.DeleteFileReqDTO{
+	err := s.fileService.DeleteFile(ctx, dtoService.DeleteFileReqDTO{
 		Identifier: entity.Identifier{
 			Username: in.Identifier.Username,
 			Folder:   in.Identifier.Folder,
@@ -81,7 +81,7 @@ func (s *server) DeleteFile(ctx context.Context, in *pb.DeleteFileReq) (*pb.Dele
 
 func (s *server) RenameFile(ctx context.Context, in *pb.RenameFileReq) (*pb.RenameFileResp, error) {
 
-	err := s.fileService.RenameFile(ctx, domain.RenameFileReqDTO{
+	err := s.fileService.RenameFile(ctx, dtoService.RenameFileReqDTO{
 		Identifier: entity.Identifier{
 			Username: in.Identifier.Username,
 			Folder:   in.Identifier.Folder,

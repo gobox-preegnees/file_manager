@@ -5,7 +5,7 @@ import (
 
 	pb "github.com/gobox-preegnees/file_manager/api/grpc"
 	dtoService "github.com/gobox-preegnees/file_manager/internal/domain"
-	"github.com/gobox-preegnees/file_manager/internal/domain/entity"
+	entity "github.com/gobox-preegnees/file_manager/internal/domain/entity"
 )
 
 func (s *server) CreateOwner(ctx context.Context, in *pb.CreateOwnerReq) (*pb.CreateOwnerResp, error) {

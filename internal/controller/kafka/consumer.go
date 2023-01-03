@@ -55,7 +55,7 @@ func NewConsumer(cnf ConsumerCnf) *consumer {
 	})
 
 	if reader == nil {
-		panic("Reader is nil")
+		cnf.Log.Fatal("Reader of consumer is nil")
 	}
 
 	return &consumer{
