@@ -10,10 +10,6 @@ import (
 
 func (s *server) CreateOwner(ctx context.Context, in *pb.CreateOwnerReq) (*pb.CreateOwnerResp, error) {
 
-	// id, err := s.ownerService.CreateOwner(ctx, entity.Owner{
-	// 	Username: in.Username,
-	// 	Folder:   in.Folder,
-	// })
 	id, err := s.ownerService.CreateOwner(ctx, dtoService.CreateOwnerReqDTO{
 		Owner: entity.Owner{
 			Username: in.Username,

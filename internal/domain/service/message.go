@@ -5,10 +5,15 @@ import (
 	"encoding/json"
 
 	mbDTO "github.com/gobox-preegnees/file_manager/internal/adapters/message_broker"
-	"github.com/gobox-preegnees/file_manager/internal/domain/entity"
 
 	"github.com/sirupsen/logrus"
 )
+
+type message struct {
+	Message   string `json:"message"`
+	Timestamp int64  `json:"timestamp"`
+	IsErr     bool   `json:"is_err"`
+}
 
 //go:generate mockgen -destination=../../mocks/domain/service/message_broker_message/message.go -package=message_broker_message -source=message.go
 type IMessageBroker interface {
@@ -36,7 +41,7 @@ func NewServices(cnf ConfServices) *messageService {
 	}
 }
 
-func (s messageService) sendMessage(message entity.Message) error {
+func (s messageService) sendMessage(message message) error {
 
 	if message.IsErr {
 		jData, err := json.Marshal(message)
