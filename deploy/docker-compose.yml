@@ -21,6 +21,7 @@ services:
       start_period: 1s
     ports:
       - "5432:5432"
+    # command: echo "{put your service name here} disabled"
     
     # volumes:
     #   - ./data:/var/lib/postgresql/data
@@ -43,7 +44,7 @@ services:
     # volumes:
     #   - ./klog/zookeeper/data:/var/lib/zookeeper/data
     #   - ./klog/zookeeper/log:/var/lib/zookeeper/log
-    command: echo "{put your service name here} disabled"
+    # command: echo "{put your service name here} disabled"
 
   kafka:
     image: confluentinc/cp-kafka:7.3.0
@@ -60,6 +61,19 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-    command: echo "{put your service name here} disabled"
+    # command: echo "{put your service name here} disabled"
+  
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    depends_on:
+      - kafka
+    container_name: kafka-ui
+    ports:
+      - "8080:8080"
+    restart: always
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=local
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
+    # command: echo "{put your service name here} disabled"
 
   
