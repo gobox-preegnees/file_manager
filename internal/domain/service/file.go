@@ -4,8 +4,8 @@ import (
 	"context"
 
 	daoDTO "github.com/gobox-preegnees/file_manager/internal/adapters/dao"
-	dtoService "github.com/gobox-preegnees/file_manager/internal/domain"
 	grpcController "github.com/gobox-preegnees/file_manager/internal/controller/grpc"
+	dtoService "github.com/gobox-preegnees/file_manager/internal/domain"
 	"github.com/sirupsen/logrus"
 )
 
@@ -18,15 +18,20 @@ type IDaoFile interface {
 }
 
 type fileService struct {
-	log      *logrus.Logger
+	log     *logrus.Logger
 	daoFile IDaoFile
 }
 
-func NewFileUsecase(log *logrus.Logger, daoFile IDaoFile) *fileService {
+type CnfFileService struct {
+	Log     *logrus.Logger
+	DaoFile IDaoFile
+}
+
+func NewFileService(cnf CnfFileService) *fileService {
 
 	return &fileService{
-		log:      log,
-		daoFile: daoFile,
+		log:     cnf.Log,
+		daoFile: cnf.DaoFile,
 	}
 }
 

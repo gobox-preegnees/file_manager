@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 
 	mbDTO "github.com/gobox-preegnees/file_manager/internal/adapters/message_broker"
+	entity "github.com/gobox-preegnees/file_manager/internal/domain/entity"
 
 	"github.com/sirupsen/logrus"
 )
@@ -26,13 +27,13 @@ type messageService struct {
 	messageBroker IMessageBroker
 }
 
-type ConfServices struct {
+type CnfMessageServices struct {
 	Ctx           context.Context
 	Log           *logrus.Logger
 	MessageBroker IMessageBroker
 }
 
-func NewServices(cnf ConfServices) *messageService {
+func NewMessageServices(cnf CnfMessageServices) *messageService {
 
 	return &messageService{
 		ctx:           cnf.Ctx,
@@ -41,7 +42,7 @@ func NewServices(cnf ConfServices) *messageService {
 	}
 }
 
-func (s messageService) sendMessage(message message) error {
+func (s messageService) SendMessage(message entity.Message) error {
 
 	if message.IsErr {
 		jData, err := json.Marshal(message)

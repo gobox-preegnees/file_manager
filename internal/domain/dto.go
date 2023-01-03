@@ -26,7 +26,7 @@ type DeleteFileReqDTO struct {
 }
 
 type SetStateReqDTO struct {
-	State entity.State
+	entity.State
 }
 
 type CreateOwnerReqDTO struct {

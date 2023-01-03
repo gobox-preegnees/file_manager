@@ -39,6 +39,7 @@ type server struct {
 
 // GrpcServerConf.
 type CnfGrpcServer struct {
+	Log *logrus.Logger
 	Address      string
 	FileService  IFileService
 	OwnerService IOwnerService
@@ -48,6 +49,7 @@ type CnfGrpcServer struct {
 func NewServer(cnf CnfGrpcServer) *server {
 
 	return &server{
+		log: cnf.Log,
 		fileService:  cnf.FileService,
 		ownerService: cnf.OwnerService,
 		address:      cnf.Address,

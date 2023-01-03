@@ -21,14 +21,19 @@ type postgresql struct {
 	conn *pgx.Conn
 }
 
-// New. Create a new Postgres
-func NewPosgresql(ctx context.Context, url string) (*postgresql, error) {
+type CnfPostgres struct {
+	Ctx context.Context
+	Url string
+}
 
-	conn, err := pgx.Connect(ctx, url)
+// New. Create a new Postgres
+func NewPosgresql(cnf CnfPostgres) (*postgresql, error) {
+
+	conn, err := pgx.Connect(cnf.Ctx, cnf.Url)
 	if err != nil {
 		return nil, err
 	}
-	if err := conn.Ping(ctx); err != nil {
+	if err := conn.Ping(cnf.Ctx); err != nil {
 		return nil, err
 	}
 

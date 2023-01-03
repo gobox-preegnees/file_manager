@@ -2,79 +2,102 @@ package main
 
 import (
 	"context"
+	// "os"
 
-	postgresqlAdapter "github.com/gobox-preegnees/file_manager/internal/adapters/dao/postgresql"
-	kafkaAdapter "github.com/gobox-preegnees/file_manager/internal/adapters/message_broker/kafka"
 	config "github.com/gobox-preegnees/file_manager/internal/config"
+
 	grpcController "github.com/gobox-preegnees/file_manager/internal/controller/grpc"
 	kafkaController "github.com/gobox-preegnees/file_manager/internal/controller/kafka"
-	services "github.com/gobox-preegnees/file_manager/internal/domain/services"
-	usecase "github.com/gobox-preegnees/file_manager/internal/domain/usecase"
-	"golang.org/x/sync/errgroup"
+
+	postgresAdapter "github.com/gobox-preegnees/file_manager/internal/adapters/dao/postgresql"
+	kafkaAdapter "github.com/gobox-preegnees/file_manager/internal/adapters/message_broker/kafka"
+	service "github.com/gobox-preegnees/file_manager/internal/domain/service"
 
 	"github.com/sirupsen/logrus"
+	"golang.org/x/sync/errgroup"
 )
 
 func main() {
-	
-	cnf := config.GetConfig("C:\\Users\\secrr\\Desktop\\fileManagerNew\\file_manager\\cnf.yml")
-	ctx := context.TODO()
-
-	dao, err := postgresqlAdapter.NewPosgresql(ctx, cnf.Pg)
-	if err != nil {
-		panic(err)
-	}
+	var path string
+	// if  == "" {
+	path = "C:\\Users\\secrr\\Desktop\\fileManagerNew\\file_manager\\cnf.yml"
+	// } else {
+	// path = os.Args[1]
+	// }
+	cnf := config.GetConfig(path)
 
 	logger := logrus.New()
+	logger.SetReportCaller(true)
 	if cnf.Debug {
 		logger.SetLevel(logrus.DebugLevel)
-		logger.SetReportCaller(true)
+	} else {
+		logger.SetLevel(logrus.ErrorLevel)
+	}
+
+	ctx, cancel := context.WithCancel(context.TODO())
+
+	dao, err := postgresAdapter.NewPosgresql(postgresAdapter.CnfPostgres{
+		Ctx: ctx,
+		Url: cnf.Pg.Url,
+	})
+	if err != nil {
+		logger.Fatal(err)
 	}
 
 	messageBroker := kafkaAdapter.NewProducer(kafkaAdapter.ProducerConf{
-		Log:   logger,
-		Topic: "errors",
-		Addrs: []string{cnf.Kafka},
+		Log:       logger,
+		ErrTopic:  cnf.Kafka.Producer.ErrTopic,
+		Addrs:     cnf.Kafka.Addr,
+		Attempts:  cnf.Kafka.Producer.Attempts,
+		Timeout:   cnf.Kafka.Producer.Timeout,
+		Sleeptime: cnf.Kafka.Producer.Sleeptime,
 	})
-	defer messageBroker.Close()
-
-	service := services.NewServices(services.ConfServices{
+	messageService := service.NewMessageServices(service.CnfMessageServices{
 		Ctx:           ctx,
 		Log:           logger,
 		MessageBroker: messageBroker,
 	})
-	
-	fileUsecase := usecase.NewFileUsecase(logger, dao)
-	ownerUsecase := usecase.NewOwnerUsecase(logger, dao, service)
-	statesUsecase := usecase.NewStateUsecase(logger, dao, service)
 
-	grpcServer := grpcController.NewServer(grpcController.GrpcServerConf{
-		Socket:       cnf.App,
-		FileUsecase:  fileUsecase,
-		OwnerUsecase: ownerUsecase,
+	stateService := service.NewStateService(service.CnfStateService{
+		Log:            logger,
+		DaoState:       dao,
+		ServiceMessage: messageService,
 	})
-	
+	fileService := service.NewFileService(service.CnfFileService{
+		Log:     logger,
+		DaoFile: dao,
+	})
+	ownerService := service.NewOwnerService(service.CnfOwnerService{
+		Log:            logger,
+		DaoOwner:       dao,
+		ServiceMessage: messageService,
+	})
+
+	gController := grpcController.NewServer(grpcController.CnfGrpcServer{
+		Log:          logger,
+		Address:      cnf.App.Addr,
+		FileService:  fileService,
+		OwnerService: ownerService,
+	})
+	kController := kafkaController.NewConsumer(kafkaController.ConsumerCnf{
+		Ctx:          ctx,
+		Log:          logger,
+		Topic:        cnf.Kafka.Consumer.StateTopic,
+		Addrs:        cnf.Kafka.Addr,
+		GroupId:      cnf.Kafka.Consumer.GroupId,
+		Partition:    cnf.Kafka.Consumer.Partition,
+		StateService: stateService,
+	})
+
 	g := new(errgroup.Group)
-
 	g.Go(func() error {
-        return grpcServer.Run()
+		return gController.Run()
 	})
-
-	consumer := kafkaController.NewConsumer(kafkaController.ConsumerCnf{
-		Ctx: ctx,
-		Log: logger,
-		Topic: "states",
-		Addrs: []string{cnf.Kafka},
-		GroupId: "states_id",
-		Partition: 0,
-		StateUsecase: statesUsecase,
+	g.Go(func() error {
+		return kController.Run()
 	})
-	
-    g.Go(func() error {
-        return consumer.Run()
-	})
-
-	if err := g.Wait(); err!= nil {
-        panic(err)
+	if err := g.Wait(); err != nil {
+		cancel()
+		logger.Fatal(err)
 	}
 }

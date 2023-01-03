@@ -46,6 +46,13 @@ type ConsumerCnf struct {
 // New. Create new consumer instance
 func NewConsumer(cnf ConsumerCnf) *consumer {
 
+	if conn, err := kafka.Dial("tcp", cnf.Addrs[0]); err != nil {
+		conn.Close()
+		cnf.Log.Fatal(err)
+	} else {
+		conn.Close()
+	}
+
 	reader := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:  cnf.Addrs,
 		GroupID:  cnf.GroupId,
@@ -53,10 +60,6 @@ func NewConsumer(cnf ConsumerCnf) *consumer {
 		Logger:   cnf.Log,
 		MinBytes: 0,
 	})
-
-	if reader == nil {
-		cnf.Log.Fatal("Reader of consumer is nil")
-	}
 
 	return &consumer{
 		ctx:          cnf.Ctx,
@@ -87,8 +90,10 @@ func (k *consumer) Run() error {
 		}
 		k.log.Debugf("state: %v", state)
 
-		k.stateService.SetState(context.Background(), state)
-		k.log.Debugf("success set state: %v", state)
+		go func() {
+			k.stateService.SetState(context.Background(), state)
+			k.log.Debugf("success set state: %v", state)
+		}()
 	}
 }
 
@@ -98,7 +103,7 @@ func (k *consumer) validateMessage(msg []byte) (dtoService.SetStateReqDTO, error
 	validate := validator.New()
 	var state dtoService.SetStateReqDTO
 
-	err := json.Unmarshal([]byte(msg), &state)
+	err := json.Unmarshal(msg, &state)
 	if err != nil {
 		return dtoService.SetStateReqDTO{}, fmt.Errorf("$%w {msg:{%v}} {error:%v}", ErrInvalidData, msg, err)
 	}
