@@ -36,7 +36,7 @@ func NewServices(cnf ConfServices) *messageService {
 	}
 }
 
-func (s messageService) SendMessage(message entity.Message) error {
+func (s messageService) sendMessage(message entity.Message) error {
 
 	if message.IsErr {
 		jData, err := json.Marshal(message)

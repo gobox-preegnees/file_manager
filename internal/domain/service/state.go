@@ -7,6 +7,7 @@ import (
 	daoDTO "github.com/gobox-preegnees/file_manager/internal/adapters/dao"
 	kafkaController "github.com/gobox-preegnees/file_manager/internal/controller/kafka"
 	entity "github.com/gobox-preegnees/file_manager/internal/domain/entity"
+	dtoService "github.com/gobox-preegnees/file_manager/internal/domain"
 
 	"github.com/sirupsen/logrus"
 )
@@ -42,16 +43,16 @@ func NewStateService(cnf CnfStateService) *stateService {
 	}
 }
 
-func (s stateService) SetState(ctx context.Context, state entity.State) {
+func (s stateService) SetState(ctx context.Context, setStateReqDTO dtoService.SetStateReqDTO) {
 
 	if err := s.daoState.SetState(ctx, daoDTO.SetStateReqDTO{
 		Identifier: daoDTO.Identifier{
-			Username: state.Username,
-			Folder:   state.Folder,
+			Username: setStateReqDTO.State.Username,
+			Folder:   setStateReqDTO.State.Folder,
 		},
-		FileName:    state.FileName,
-		VirtualName: state.VirtualName,
-		State:       state.State,
+		FileName:    setStateReqDTO.State.FileName,
+		VirtualName: setStateReqDTO.State.VirtualName,
+		State:       setStateReqDTO.State.State,
 	}); err != nil {
 		s.log.Error(err)
 		if err := s.serviceMessage.SendMessage(entity.Message{

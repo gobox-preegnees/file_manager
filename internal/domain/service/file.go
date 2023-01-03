@@ -4,8 +4,8 @@ import (
 	"context"
 
 	daoDTO "github.com/gobox-preegnees/file_manager/internal/adapters/dao"
+	dtoService "github.com/gobox-preegnees/file_manager/internal/domain"
 	grpcController "github.com/gobox-preegnees/file_manager/internal/controller/grpc"
-	"github.com/gobox-preegnees/file_manager/internal/domain/entity"
 	"github.com/sirupsen/logrus"
 )
 
@@ -17,30 +17,30 @@ type IDaoFile interface {
 	FindAllFilesByOwnerOrFileId(ctx context.Context, findAllFilesByOwnerReqDTO daoDTO.FindAllFilesByOwnerOrFileIdReqDTO) (daoDTO.FindAllFilesByOwnerOrFileIdRespDTO, error)
 }
 
-type fileUsecase struct {
+type fileService struct {
 	log      *logrus.Logger
 	daoFile IDaoFile
 }
 
-func NewFileUsecase(log *logrus.Logger, daoFile IDaoFile) *fileUsecase {
+func NewFileUsecase(log *logrus.Logger, daoFile IDaoFile) *fileService {
 
-	return &fileUsecase{
+	return &fileService{
 		log:      log,
 		daoFile: daoFile,
 	}
 }
 
-func (f fileUsecase) GetFiles(ctx context.Context, identifier entity.Identifier, ownerId, fileId int) ([]daoDTO.FullFile, error) {
+func (f fileService) GetFiles(ctx context.Context, getFilesReqDTO dtoService.GetFilesReqDTO) ([]daoDTO.FullFile, error) {
 
 	filesDTO, err := f.daoFile.FindAllFilesByOwnerOrFileId(ctx, daoDTO.FindAllFilesByOwnerOrFileIdReqDTO{
 		Owner: daoDTO.Owner{
 			Identifier: daoDTO.Identifier{
-				Username: identifier.Username,
-				Folder:   identifier.Folder,
+				Username: getFilesReqDTO.Identifier.Username,
+				Folder:   getFilesReqDTO.Identifier.Folder,
 			},
-			OwnerId: ownerId,
+			OwnerId: getFilesReqDTO.OwnerId,
 		},
-		FileId: fileId,
+		FileId: getFilesReqDTO.FileId,
 	})
 	if err != nil {
 		return nil, err
@@ -48,20 +48,20 @@ func (f fileUsecase) GetFiles(ctx context.Context, identifier entity.Identifier,
 	return filesDTO.Files, nil
 }
 
-func (f fileUsecase) SaveFile(ctx context.Context, identifier entity.Identifier, file entity.File, client string) (int, error) {
+func (f fileService) SaveFile(ctx context.Context, saveFileReqDTO dtoService.SaveFileReqDTO) (int, error) {
 
 	id, err := f.daoFile.SaveFile(ctx, daoDTO.SaveFileReqDTO{
 		Identifier: daoDTO.Identifier{
-			Username: identifier.Username,
-			Folder:   identifier.Folder,
+			Username: saveFileReqDTO.Identifier.Username,
+			Folder:   saveFileReqDTO.Identifier.Folder,
 		},
 		File: daoDTO.File{
-			FileName: file.FileName,
-			HashSum:  file.HashSum,
-			SizeFile: file.SizeFile,
-			ModTime:  file.ModTime,
+			FileName: saveFileReqDTO.File.FileName,
+			HashSum:  saveFileReqDTO.File.HashSum,
+			SizeFile: saveFileReqDTO.File.SizeFile,
+			ModTime:  saveFileReqDTO.File.ModTime,
 		},
-		Client: client,
+		Client: saveFileReqDTO.Client,
 	})
 	if err != nil {
 		return 0, err
@@ -69,31 +69,31 @@ func (f fileUsecase) SaveFile(ctx context.Context, identifier entity.Identifier,
 	return id, nil
 }
 
-func (f fileUsecase) RenameFile(ctx context.Context, identifier entity.Identifier, oldFilName, newFileName, client string) error {
+func (f fileService) RenameFile(ctx context.Context, renameFileReqDTO dtoService.RenameFileReqDTO) error {
 
 	err := f.daoFile.RenameFile(ctx, daoDTO.RenameFileReqDTO{
 		Identifier: daoDTO.Identifier{
-			Username: identifier.Username,
-			Folder:   identifier.Folder,
+			Username: renameFileReqDTO.Identifier.Username,
+			Folder:   renameFileReqDTO.Identifier.Folder,
 		},
-		Client:  client,
-		OldName: oldFilName,
-		NewName: newFileName,
+		Client:  renameFileReqDTO.Client,
+		OldName: renameFileReqDTO.OldFilName,
+		NewName: renameFileReqDTO.NewFileName,
 	})
 	return err
 }
 
-func (f fileUsecase) DeleteFile(ctx context.Context, identifier entity.Identifier, client, fileName string) error {
+func (f fileService) DeleteFile(ctx context.Context, deleteFileReqDTO dtoService.DeleteFileReqDTO) error {
 
 	err := f.daoFile.DeleteFile(ctx, daoDTO.DeleteFileReqDTO{
 		Identifier: daoDTO.Identifier{
-			Username: identifier.Username,
-			Folder:   identifier.Folder,
+			Username: deleteFileReqDTO.Identifier.Username,
+			Folder:   deleteFileReqDTO.Identifier.Folder,
 		},
-		Client:   client,
-		FileName: fileName,
+		Client:   deleteFileReqDTO.Client,
+		FileName: deleteFileReqDTO.FileName,
 	})
 	return err
 }
 
-var _ grpcController.IFileService = (*fileUsecase)(nil)
+var _ grpcController.IFileService = (*fileService)(nil)

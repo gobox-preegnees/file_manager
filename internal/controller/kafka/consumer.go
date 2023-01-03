@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/gobox-preegnees/file_manager/internal/domain/entity"
+	dtoService "github.com/gobox-preegnees/file_manager/internal/domain"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/segmentio/kafka-go"
@@ -15,7 +15,7 @@ import (
 
 //go:generate mockgen -destination=../../mocks/kafka/consumer/state/usecase.go -package=kafka -source=consumer.go
 type IStateSerivce interface {
-	SetState(context.Context, entity.State)
+	SetState(context.Context, dtoService.SetStateReqDTO)
 }
 
 var (
@@ -93,19 +93,19 @@ func (k *consumer) Run() error {
 }
 
 // validateMessage. Conducts validation
-func (k *consumer) validateMessage(msg []byte) (entity.State, error) {
+func (k *consumer) validateMessage(msg []byte) (dtoService.SetStateReqDTO, error) {
 
 	validate := validator.New()
-	var state entity.State
+	var state dtoService.SetStateReqDTO
 
 	err := json.Unmarshal([]byte(msg), &state)
 	if err != nil {
-		return entity.State{}, fmt.Errorf("$%w {msg:{%v}} {error:%v}", ErrInvalidData, msg, err)
+		return dtoService.SetStateReqDTO{}, fmt.Errorf("$%w {msg:{%v}} {error:%v}", ErrInvalidData, msg, err)
 	}
 
 	err = validate.Struct(&state)
 	if err != nil {
-		return entity.State{}, fmt.Errorf("$%w {msg:{%v}} {error:%v}", ErrValidate, msg, err)
+		return dtoService.SetStateReqDTO{}, fmt.Errorf("$%w {msg:{%v}} {error:%v}", ErrValidate, msg, err)
 	}
 	return state, nil
 }

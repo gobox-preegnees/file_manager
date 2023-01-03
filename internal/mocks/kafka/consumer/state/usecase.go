@@ -8,41 +8,41 @@ import (
 	context "context"
 	reflect "reflect"
 
-	entity "github.com/gobox-preegnees/file_manager/internal/domain/entity"
+	domain "github.com/gobox-preegnees/file_manager/internal/domain"
 	gomock "github.com/golang/mock/gomock"
 )
 
-// MockIStateUsecase is a mock of IStateUsecase interface.
-type MockIStateUsecase struct {
+// MockIStateSerivce is a mock of IStateSerivce interface.
+type MockIStateSerivce struct {
 	ctrl     *gomock.Controller
-	recorder *MockIStateUsecaseMockRecorder
+	recorder *MockIStateSerivceMockRecorder
 }
 
-// MockIStateUsecaseMockRecorder is the mock recorder for MockIStateUsecase.
-type MockIStateUsecaseMockRecorder struct {
-	mock *MockIStateUsecase
+// MockIStateSerivceMockRecorder is the mock recorder for MockIStateSerivce.
+type MockIStateSerivceMockRecorder struct {
+	mock *MockIStateSerivce
 }
 
-// NewMockIStateUsecase creates a new mock instance.
-func NewMockIStateUsecase(ctrl *gomock.Controller) *MockIStateUsecase {
-	mock := &MockIStateUsecase{ctrl: ctrl}
-	mock.recorder = &MockIStateUsecaseMockRecorder{mock}
+// NewMockIStateSerivce creates a new mock instance.
+func NewMockIStateSerivce(ctrl *gomock.Controller) *MockIStateSerivce {
+	mock := &MockIStateSerivce{ctrl: ctrl}
+	mock.recorder = &MockIStateSerivceMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockIStateUsecase) EXPECT() *MockIStateUsecaseMockRecorder {
+func (m *MockIStateSerivce) EXPECT() *MockIStateSerivceMockRecorder {
 	return m.recorder
 }
 
 // SetState mocks base method.
-func (m *MockIStateUsecase) SetState(arg0 context.Context, arg1 entity.State) {
+func (m *MockIStateSerivce) SetState(arg0 context.Context, arg1 domain.SetStateReqDTO) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "SetState", arg0, arg1)
 }
 
 // SetState indicates an expected call of SetState.
-func (mr *MockIStateUsecaseMockRecorder) SetState(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockIStateSerivceMockRecorder) SetState(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetState", reflect.TypeOf((*MockIStateUsecase)(nil).SetState), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetState", reflect.TypeOf((*MockIStateSerivce)(nil).SetState), arg0, arg1)
 }

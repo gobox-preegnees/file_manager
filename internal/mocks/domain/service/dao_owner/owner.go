@@ -88,16 +88,16 @@ func (m *MockIServiceMessageOwner) EXPECT() *MockIServiceMessageOwnerMockRecorde
 	return m.recorder
 }
 
-// SendMessage mocks base method.
-func (m *MockIServiceMessageOwner) SendMessage(message entity.Message) error {
+// sendMessage mocks base method.
+func (m *MockIServiceMessageOwner) sendMessage(message entity.Message) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SendMessage", message)
+	ret := m.ctrl.Call(m, "sendMessage", message)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// SendMessage indicates an expected call of SendMessage.
-func (mr *MockIServiceMessageOwnerMockRecorder) SendMessage(message interface{}) *gomock.Call {
+// sendMessage indicates an expected call of sendMessage.
+func (mr *MockIServiceMessageOwnerMockRecorder) sendMessage(message interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendMessage", reflect.TypeOf((*MockIServiceMessageOwner)(nil).SendMessage), message)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "sendMessage", reflect.TypeOf((*MockIServiceMessageOwner)(nil).sendMessage), message)
 }

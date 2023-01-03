@@ -4,8 +4,10 @@ import (
 	"context"
 	"time"
 
+	grpcController "github.com/gobox-preegnees/file_manager/internal/controller/grpc"
 	daoDTO "github.com/gobox-preegnees/file_manager/internal/adapters/dao"
 	entity "github.com/gobox-preegnees/file_manager/internal/domain/entity"
+	dtoService "github.com/gobox-preegnees/file_manager/internal/domain"
 
 	"github.com/sirupsen/logrus"
 )
@@ -18,7 +20,7 @@ type IDaoOwner interface {
 
 //go:generate mockgen -destination=../../mocks/domain/service/service_message_owner/owner.go -package=service_message_owner -source=owner.go
 type IServiceMessageOwner interface {
-	SendMessage(message entity.Message) error
+	sendMessage(message entity.Message) error
 }
 
 type ownerService struct {
@@ -36,14 +38,17 @@ func NewOwnerUsecase(log *logrus.Logger, dao IDaoOwner, serviceMessage IServiceM
 	}
 }
 
-func (o ownerService) CreateOwner(ctx context.Context, owner entity.Owner) (int, error) {
+func (o ownerService) CreateOwner(ctx context.Context, createOwnerReqDTO dtoService.CreateOwnerReqDTO) (int, error) {
 
 	id, err := o.dao.SaveOwner(ctx, daoDTO.SaveOwnerDTO{
-		Identifier: daoDTO.Identifier{},
+		Identifier: daoDTO.Identifier{
+			Username: createOwnerReqDTO.Owner.Username,
+			Folder: createOwnerReqDTO.Owner.Folder,
+		},
 	})
 	if err != nil {
 		o.log.Error(err)
-		if err := o.serviceMessage.SendMessage(entity.Message{
+		if err := o.serviceMessage.sendMessage(entity.Message{
 			Message:   err.Error(),
 			Timestamp: time.Now().UTC().Unix(),
 			IsErr:     true,
@@ -55,13 +60,13 @@ func (o ownerService) CreateOwner(ctx context.Context, owner entity.Owner) (int,
 	return id, nil
 }
 
-func (o ownerService) DeleteOwner(ctx context.Context, id int) error {
+func (o ownerService) DeleteOwner(ctx context.Context, deleteOwnerReqDTO dtoService.DeleteOwnerReqDTO) error {
 
 	if err := o.dao.DeleteOwner(ctx, daoDTO.DeleteOwnerDTO{
-		OwnerID: id,
+		OwnerID: deleteOwnerReqDTO.Id,
 	}); err != nil {
 		o.log.Error(err)
-		if err := o.serviceMessage.SendMessage(entity.Message{
+		if err := o.serviceMessage.sendMessage(entity.Message{
 			Message:   err.Error(),
 			Timestamp: time.Now().UTC().Unix(),
 			IsErr:     true,
@@ -72,3 +77,5 @@ func (o ownerService) DeleteOwner(ctx context.Context, id int) error {
 	}
 	return nil
 }
+
+var _ grpcController.IOwnerService = (*ownerService)(nil)

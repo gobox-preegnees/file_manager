@@ -126,7 +126,7 @@ func TestConsumerWork(t *testing.T) {
 
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-	mockConsumer := mockCons.NewMockIStateUsecase(mockCtrl)
+	mockConsumer := mockCons.NewMockIStateSerivce(mockCtrl)
 	mockConsumer.EXPECT().SetState(gomock.Any(), gomock.Any()).AnyTimes()
 
 	go func() {
