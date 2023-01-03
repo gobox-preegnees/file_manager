@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	// "os"
+	"os"
 
 	config "github.com/gobox-preegnees/file_manager/internal/config"
 
@@ -18,13 +18,8 @@ import (
 )
 
 func main() {
-	var path string
-	// if  == "" {
-	path = "C:\\Users\\secrr\\Desktop\\fileManagerNew\\file_manager\\cnf.yml"
-	// } else {
-	// path = os.Args[1]
-	// }
-	cnf := config.GetConfig(path)
+
+	cnf := config.GetConfig(os.Args[1])
 
 	logger := logrus.New()
 	logger.SetReportCaller(true)

@@ -75,5 +75,8 @@ services:
       - KAFKA_CLUSTERS_0_NAME=local
       - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
     # command: echo "{put your service name here} disabled"
-
   
+  file_manager:
+    build: ../
+    # TODO: посмотреть как прокинуть url, addr kafak
+  # command: echo "{put your service name here} disabled"
